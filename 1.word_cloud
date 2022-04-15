@@ -1,0 +1,170 @@
+import collections
+import warnings ; warnings.filterwarnings('ignore')
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+
+from konlpy.tag import Kkma ; kkma=Kkma()
+from konlpy.tag import Okt ; okt = Okt()
+
+import pandas as pd
+
+import time
+
+import matplotlib
+import matplotlib.pyplot as plt
+from IPython.display import set_matplotlib_formats
+matplotlib.rcParams['font.family'] ='Malgun Gothic'
+matplotlib.rcParams['axes.unicode_minus'] =False
+matplotlib.rc('font',family = 'Malgun Gothic')
+set_matplotlib_formats('retina')
+matplotlib.rc('axes',unicode_minus = False)
+
+from wordcloud import WordCloud
+from IPython.display import set_matplotlib_formats
+
+wd = webdriver.Chrome('chromedriver', options=chrome_options)
+
+news_list = []
+news_list_broad = []
+
+######################## 국내 키워드 ########################
+wd.get("https://www.yna.co.kr/economy/all/1") ; time.sleep(0.5) #연합뉴스 경제 1면
+for strong in wd.find_elements_by_css_selector('#container > div > div > div.section01 > section > div.list-type038 > ul > li > div > div.news-con > a > strong'):
+    news_list.append(strong.text)
+
+wd.get("https://www.mk.co.kr/news/economy/?page=0") ; time.sleep(0.5) #매일경제 경제 1면
+for a in wd.find_elements_by_css_selector('#container_left > div.list_area > dl > dt > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.hankyung.com/economy?page=1") ; time.sleep(0.5) #한국경제 경제 1면
+for a in wd.find_elements_by_css_selector('#container > div.wrap_cont > div.inner_list > ul > li > div.article > h3 > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.asiae.co.kr/list/economic-general/1") ; time.sleep(0.5) #아시아경제 경제-일반 1면
+for a in wd.find_elements_by_css_selector('#container > div.content > div.cont_listarea > div.cont_list > div > h3 > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.joongang.co.kr/money") ; time.sleep(0.5) #중앙일보 경제 1면
+for a in wd.find_elements_by_css_selector('#story_list > li > div > h2 > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.chosun.com/economy/economy_general/?page=1") ; time.sleep(0.5) #조선일보 경제 1면
+for a in wd.find_elements_by_css_selector('#main > div.story-feed > div > div > div > div > div > div.story-card.story-card--art-left.\|.flex.flex--wrap > div.story-card-block.story-card-right.\|.grid__col--sm-8.grid__col--md-8.grid__col--lg-8 > div.story-card-component.story-card__headline-container.\|.text--overflow-ellipsis.text--left'):
+    news_list.append(a.text)
+
+wd.get("https://www.hani.co.kr/arti/economy/economy_general/list1.html") ; time.sleep(0.5) #한겨례 경제 1면
+for a in wd.find_elements_by_css_selector('#section-left-scroll-in > div.section-list-area > div > div > h4 > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.donga.com/news/Economy/List?p=1&prod=news&ymd=&m=") ; time.sleep(0.5) #동아일보 경제 1면
+for a in wd.find_elements_by_css_selector('#content > div > div.rightList > a > span.tit'):
+    news_list.append(a.text)
+
+wd.get("http://news.kmib.co.kr/article/list.asp?sid1=eco&sid2=&st=all") ; time.sleep(0.5) #국민일보 경제 1면
+for a in wd.find_elements_by_css_selector('#sub > div > div.NwsCon > div.nws_list > div > dl > dt > a'):
+    news_list.append(a.text)
+
+wd.get("https://www.khan.co.kr/economy") ; time.sleep(0.5) #경향신문 경제 1면
+for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a'):
+    news_list.append(a.text)
+    
+word_list = sum([okt.nouns(a)for a in news_list],[]) 
+
+remove_list = ['속보','홍','증가','폭','곳','달','명','등','개월','역대','']
+
+for a in remove_list:
+    while a in word_list:
+        word_list.remove(a)
+
+counts_dict = collections.Counter(word_list)
+
+df = pd.DataFrame(list(counts_dict.items()), columns=['단어','빈도수'])
+df.sort_values('빈도수', ascending=False, inplace=True) #빈도수 기준으로 정렬
+df_2 = df.head(15) #상위 30개만 새로운 DataFrame으로 지정
+
+plt.figure(figsize=(5, 5)) #그래프 크기 지정
+plt.xticks(fontsize=10, rotation=45) 
+plt.bar(df_2['단어'], df_2['빈도수'])
+plt.show();
+
+# wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "Accent_r", width=1500, height=1000).generate_from_frequencies(counts_dict)
+wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", width=2000, height=2500).generate_from_frequencies(counts_dict)
+# plt.figure(figsize=(5, 10))
+plt.imshow(wordcloud)
+plt.axis('off')
+# plt.title('국내 금융시장 주요 키워드')
+plt.show()
+
+######################## 해외 키워드 ########################
+wd.get("https://www.yna.co.kr/economy/international-economy/1") ; time.sleep(0.5) #연합뉴스 국제경제 1면
+for strong in wd.find_elements_by_css_selector('#container > div > div > div.section01 > section > div.list-type038 > ul > li > div > div.news-con > a > strong'):
+    news_list_broad.append(strong.text)
+
+wd.get("https://www.mk.co.kr/news/world/global-economy/?page=0") ; time.sleep(0.5) #매일경제 국제경제 1면
+for a in wd.find_elements_by_css_selector('#container_left > div.list_area > dl > dt > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.hankyung.com/all-news/international?page=1") ; time.sleep(0.5) #한국경제 국제경제 1면
+for a in wd.find_elements_by_css_selector('#container > div.contents_wrap > div.contents > div.article_content > div.daily_article > div > ul > li > div.txt > h3 > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.asiae.co.kr/list/world-economy/1") ; time.sleep(0.5) #아시아경제 국제경제 1면
+for a in wd.find_elements_by_css_selector('#container > div.content > div.cont_listarea > div.cont_list > div > h3 > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.joongang.co.kr/world/general") ; time.sleep(0.5) #중앙일보 국제경제 1면
+for a in wd.find_elements_by_css_selector('#story_list > li > div > h2 > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.chosun.com/international/") ; time.sleep(0.5) #조선일보 국제경제 1면
+for span in wd.find_elements_by_css_selector('#main > div.flex-chain-wrapper.md.\|.width--100.box--pad-bottom-xl.box--bg-undefined.box--border.box--border-grey-40.box--border-xs.box--border-horizontal.box--border-horizontal-bottom.box--hidden-lg.box--hidden-sm > section > div > div > div > div > div > div > div > div.story-card.story-card--art-left.\|.flex.flex--wrap > div.story-card-block.story-card-right.\|.grid__col--sm-9.grid__col--md-9.grid__col--lg-9 > div.story-card-component.story-card__headline-container.\|.text--overflow-ellipsis.text--left > a > span'):
+    news_list_broad.append(span.text)
+
+wd.get("https://www.hani.co.kr/arti/international/globaleconomy/list1.html") ; time.sleep(0.5) #한겨례 국제경제 1면
+for a in wd.find_elements_by_css_selector('#section-left-scroll-in > div.section-list-area > div > div > h4 > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.donga.com/news/Inter") ; time.sleep(0.5) #동아일보 국제경제 1면
+for span in wd.find_elements_by_css_selector('#content > div.timeline_news > div.section_timeline > div.timeline_cont > div > ul > li > div > a > span'):
+    news_list_broad.append(span.text)
+
+wd.get("http://news.kmib.co.kr/article/list.asp?sid1=int") ; time.sleep(0.5) #국민일보 경제 1면
+for a in wd.find_elements_by_css_selector('#sub > div > div.NwsCon > div.nws_list > div > dl > dt > a'):
+    news_list_broad.append(a.text)
+
+wd.get("https://www.khan.co.kr/world") ; time.sleep(0.5) #경향신문 경제 1면
+for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a'):
+    news_list_broad.append(a.text)
+    
+    
+word_list_broad = sum([okt.nouns(a)for a in news_list_broad],[]) 
+
+remove_list_broad = ['속보','홍','증가','폭','곳','달','명','등','개월','역대','']
+
+for a in remove_list_broad:
+    while a in word_list_broad:
+        word_list_broad.remove(a)
+
+counts_dict_broad = collections.Counter(word_list_broad)
+
+df_broad = pd.DataFrame(list(counts_dict_broad.items()), columns=['단어','빈도수'])
+df_broad.sort_values('빈도수', ascending=False, inplace=True) #빈도수 기준으로 정렬
+df_broad_2 = df_broad.head(15) #상위 30개만 새로운 DataFrame으로 지정
+
+plt.figure(figsize=(5, 5)) #그래프 크기 지정
+plt.xticks(fontsize=10, rotation=45) 
+plt.bar(df_broad_2['단어'], df_broad_2['빈도수'])
+plt.show();
+
+wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", width=2000, height=2500).generate_from_frequencies(counts_dict_broad)
+# plt.figure(figsize=(5, 10))
+plt.imshow(wordcloud)
+plt.axis('off')
+# plt.title('해외 금융시장 주요 키워드')
+plt.show()
