@@ -1,0 +1,129 @@
+##### 라이브러리 #####
+from datetime import datetime
+import datetime
+
+import urllib.request
+from bs4 import BeautifulSoup
+import re
+import warnings
+warnings.filterwarnings('ignore')
+
+import selenium
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+
+import time
+
+##### 금리 #####
+wd = webdriver.Chrome('chromedriver', options=chrome_options)
+wd.get("https://m.stock.naver.com/marketindex/domesticInterest")
+time.sleep(2)
+# call = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketHome__1VTP1 > table > tbody > tr > td')][1][:6]),2)
+회사채 = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketHome__1VTP1 > table > tbody > tr > td')][7][:6]),2)
+
+wd.get("https://seibro.or.kr/websquare/control.jsp?w2xPath=/IPORTAL/user/repo/BIP_CNTS09001V.xml")
+time.sleep(4)
+repo = round(float([nobr.text for nobr in wd.find_elements_by_css_selector('#gridIRate_cell_0_1 > nobr')][0]),2)
+
+wd.get("https://m.stock.naver.com/marketindex/bond/nation/KOR")
+time.sleep(2)
+국고3년 = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketBond__3pNDc > table > tbody > tr > td')][7][:6]),2)
+국고10년 = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketBond__3pNDc > table > tbody > tr > td')][1][:6]),2)
+wd.get("https://m.stock.naver.com/marketindex/bond/nation/USA")
+time.sleep(2)
+미국10년 = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketBond__3pNDc > table > tbody > tr > td')][1][:6]),2)
+
+##### 환율 #####
+wd.get("http://www.kmbco.com/kor/infoservice/exchange_info.do")
+한국자금중개환율 = [td.text for td in wd.find_elements_by_css_selector('body > main > article > div > table > tbody > tr > td')][1]
+
+wd.get("https://kr.investing.com/currencies/usd-krw-chart")
+역외 = [span.text for span in wd.find_elements_by_css_selector('#last_last')][0]
+wd.get("https://m.stock.naver.com/marketindex/exchangeWorld")
+time.sleep(2)
+엔달러 = [td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketExchange__2eCb8 > table > tbody > tr > td')][4][:8]
+유로달러 = [span.text for span in wd.find_elements_by_css_selector('#content > div > ul > li > a > span')][-4]
+위안달러 = [span.text for span in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketExchange__2eCb8 > table > tbody > tr > td')][16][:6]
+
+##### 주가 #####
+page = urllib.request.urlopen("https://finance.naver.com/sise/")
+soup = BeautifulSoup(page, 'html.parser')
+코스피 = soup.find('span', id='KOSPI_now').text
+코스닥 = soup.find('span', id='KOSDAQ_now').text
+
+wd.get("https://finance.naver.com/world/")
+abroad= [span.text for span in wd.find_elements_by_css_selector('#americaIndex > thead > tr > td.tb_td3 > span')]
+다우 = abroad[0]
+SNP = abroad[4]
+나스닥 = abroad[2]
+영국 = abroad[18]
+독일 = abroad[20]
+프랑스 = abroad[19]
+일본 = abroad[10]
+중국상해 = abroad[7]
+중국항셍 = abroad[11]
+홍콩 = abroad[12]
+
+wd.get("https://finance.naver.com/marketindex/?tabSel=gold#tab_section")
+WTI = [td.text for td in wd.find_elements_by_css_selector('#content > div:nth-child(3) > table > tbody > tr > td')][-4]
+GOLD = [td.text for td in wd.find_elements_by_css_selector('#content > div > table > tbody > tr > td')][-22]
+
+import openpyxl
+
+wb = openpyxl.Workbook()
+ws = wb.active
+
+
+def my_excel(aa, bb, cc, dd):
+    for aa, bb in zip(cc, dd):
+        ws[aa] = bb
+
+my_excel('a', 'b', ['A1', 'B2', 'B3', 'B4', 'B5', 'B6'], ['금리', repo, 국고3년, 국고10년, 미국10년, 회사채])
+my_excel('c', 'd', ['C1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'], ['환율', 한국자금중개환율, 역외, '없음', 엔달러, 유로달러, 위안달러])
+my_excel('e', 'f', ['E1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13'],
+         ['주가', 코스피, 코스닥, 다우, SNP, 나스닥, 영국, 독일, 프랑스, 일본, 중국상해, 중국항셍, 홍콩])
+my_excel('g', 'h', ['G1', 'H2', 'H3'], ['상품', WTI, GOLD])
+
+ws['A2'] = '레포금리'
+ws['A3'] = '국고3년'
+ws['A4'] = '국고10년'
+ws['A5'] = '미국10년'
+ws['A6'] = '회사채3년'
+
+ws['C2'] = '한국자금중개환율'
+ws['C3'] = '역외환율'
+ws['C4'] = '스왑레이트'
+ws['C5'] = '엔달러'
+ws['C6'] = '유로달러'
+ws['C7'] = '위안달러'
+
+ws['E2'] = '코스피'
+ws['E3'] = '코스닥'
+ws['E4'] = '다우'
+ws['E5'] = 'S&P'
+ws['E6'] = '나스닥'
+ws['E7'] = '영국'
+ws['E8'] = '독일'
+ws['E9'] = '프랑스'
+ws['E10'] = '일본'
+ws['E11'] = '중국상해'
+ws['E12'] = '중국항생'
+ws['E13'] = '홍콩'
+
+ws['G2'] = 'WTI'
+ws['G3'] = '금선물'
+
+##### 엑셀로 내보내기 #####
+wb.save(datetime.datetime.now().strftime('%Y-%m-%d') + '.xlsx')
