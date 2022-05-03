@@ -16,6 +16,12 @@ import pandas as pd
 
 import time
 
+import nltk
+import pickle
+from nltk.corpus import stopwords
+import re
+nltk.download('all')
+
 import matplotlib
 import matplotlib.pyplot as plt
 from IPython.display import set_matplotlib_formats
@@ -32,8 +38,10 @@ wd = webdriver.Chrome('chromedriver', options=chrome_options)
 
 news_list = []
 news_list_broad = []
+news_list_er = []
 
-######################## 국내 키워드 ########################
+# 국내 키워드
+
 wd.get("https://www.yna.co.kr/economy/all/1") ; time.sleep(0.5) #연합뉴스 경제 1면
 for strong in wd.find_elements_by_css_selector('#container > div > div > div.section01 > section > div.list-type038 > ul > li > div > div.news-con > a > strong'):
     news_list.append(strong.text)
@@ -73,16 +81,23 @@ for a in wd.find_elements_by_css_selector('#sub > div > div.NwsCon > div.nws_lis
 wd.get("https://www.khan.co.kr/economy") ; time.sleep(0.5) #경향신문 경제 1면
 for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a'):
     news_list.append(a.text)
-    
+
 word_list = sum([okt.nouns(a)for a in news_list],[]) 
 
-remove_list = ['속보','홍','증가','폭','곳','달','명','등','개월','역대','']
+remove_list = ['발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률',
+               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','특징','한국','젤','롱','세','사','보','반','이후','']
 
+               
 for a in remove_list:
     while a in word_list:
         word_list.remove(a)
 
 counts_dict = collections.Counter(word_list)
+
+dataset_dict={}
+for a,b in zip(counts_dict.keys(),counts_dict.values()):
+    if b >= 4:
+        dataset_dict[a]=b #dataset_dict 에는 빈도수 3개 이상인 데이터만 남아있음
 
 df = pd.DataFrame(list(counts_dict.items()), columns=['단어','빈도수'])
 df.sort_values('빈도수', ascending=False, inplace=True) #빈도수 기준으로 정렬
@@ -90,18 +105,19 @@ df_2 = df.head(15) #상위 30개만 새로운 DataFrame으로 지정
 
 plt.figure(figsize=(5, 5)) #그래프 크기 지정
 plt.xticks(fontsize=10, rotation=45) 
-plt.bar(df_2['단어'], df_2['빈도수'])
+plt.barh(df_2['단어'][::-1], df_2['빈도수'][::-1])
 plt.show();
 
 # wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "Accent_r", width=1500, height=1000).generate_from_frequencies(counts_dict)
-wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", width=2000, height=2500).generate_from_frequencies(counts_dict)
+wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", max_words=25, prefer_horizontal=1, width=2000, height=2500).generate_from_frequencies(dataset_dict)
 # plt.figure(figsize=(5, 10))
 plt.imshow(wordcloud)
 plt.axis('off')
 # plt.title('국내 금융시장 주요 키워드')
 plt.show()
 
-######################## 해외 키워드 ########################
+# 해외 키워드
+
 wd.get("https://www.yna.co.kr/economy/international-economy/1") ; time.sleep(0.5) #연합뉴스 국제경제 1면
 for strong in wd.find_elements_by_css_selector('#container > div > div > div.section01 > section > div.list-type038 > ul > li > div > div.news-con > a > strong'):
     news_list_broad.append(strong.text)
@@ -141,11 +157,11 @@ for a in wd.find_elements_by_css_selector('#sub > div > div.NwsCon > div.nws_lis
 wd.get("https://www.khan.co.kr/world") ; time.sleep(0.5) #경향신문 경제 1면
 for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a'):
     news_list_broad.append(a.text)
-    
-    
+
 word_list_broad = sum([okt.nouns(a)for a in news_list_broad],[]) 
 
-remove_list_broad = ['속보','홍','증가','폭','곳','달','명','등','개월','역대','']
+remove_list_broad  = ['발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률',
+               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','특징','한국','젤','롱','세','사','보','반','이후','']
 
 for a in remove_list_broad:
     while a in word_list_broad:
@@ -153,16 +169,127 @@ for a in remove_list_broad:
 
 counts_dict_broad = collections.Counter(word_list_broad)
 
+dataset_dict_broad={}
+for a,b in zip(counts_dict_broad.keys(),counts_dict_broad.values()):
+    if b >= 4:
+        dataset_dict_broad[a]=b #dataset_dict 에는 빈도수 3개 이상인 데이터만 남아있음
+
 df_broad = pd.DataFrame(list(counts_dict_broad.items()), columns=['단어','빈도수'])
 df_broad.sort_values('빈도수', ascending=False, inplace=True) #빈도수 기준으로 정렬
 df_broad_2 = df_broad.head(15) #상위 30개만 새로운 DataFrame으로 지정
 
 plt.figure(figsize=(5, 5)) #그래프 크기 지정
 plt.xticks(fontsize=10, rotation=45) 
-plt.bar(df_broad_2['단어'], df_broad_2['빈도수'])
+plt.barh(df_broad_2['단어'][::-1], df_broad_2['빈도수'][::-1])
 plt.show();
 
-wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", width=2000, height=2500).generate_from_frequencies(counts_dict_broad)
+wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", max_words=25, prefer_horizontal=1, width=2000, height=2500).generate_from_frequencies(dataset_dict_broad)
+# plt.figure(figsize=(5, 10))
+plt.imshow(wordcloud)
+plt.axis('off')
+# plt.title('해외 금융시장 주요 키워드')
+plt.show()
+
+# 영자 신문
+
+wd.get("https://www.nytimes.com/section/business") ; time.sleep(0.5) #NewYorkTimes Business 1면
+for h2 in wd.find_elements_by_css_selector('#stream-panel > div.css-13mho3u > ol > li > div > div.css-1l4spti > a > h2'):
+    news_list_er.append(h2.text)
+
+wd.get("https://www.washingtonpost.com/economy/") ; time.sleep(0.5) #Washington Post Business 1면
+for h3 in wd.find_elements_by_css_selector('#__next > div > div > main > article > div > div > div > div.story-headline.pr-sm > a > h3'):
+    news_list_er.append(h3.text)
+
+wd.get("https://www.huffpost.com/impact/business") ; time.sleep(0.5) #HuffPost Business 1면
+for h3 in wd.find_elements_by_css_selector('#zone-twilight1 > section > div.zone__content > div > div > div.card__headlines > a > h3'):
+    news_list_er.append(h3.text)
+    
+wd.get("https://www.huffpost.com/news/"); time.sleep(0.5) #huffpost 1면
+for a in wd.find_elements_by_css_selector('#zone-twilight1 > section > div.zone__content > div > div > div.card__headlines > a > h3'):
+    news_list_er.append(a.text)
+
+wd.get("https://www.forbes.com/business/?sh=3f70cec0535f") ; time.sleep(0.5) # Forbes News  1면
+for a in wd.find_elements_by_css_selector('#row-2 > div > div > div > div.chansec-stream__content > div > div > article > div.stream-item__text > h3 > a'):
+    news_list_er.append(a.text)
+
+# wd.get("https://edition.cnn.com/business") ; time.sleep(0.5) # CNN News  1면 ##22년 4월 28일 부로 안돌아감
+# for a in wd.find_elements_by_css_selector('#us-zone-1 > div.l-container > div > div.column.zn__column--idx-0 > ul > li > article > div > div > h3 > a > span.cd__headline-text.vid-left-enabled'):
+#     news_list_er.append(a.text)
+
+wd.get("https://www.wsj.com/news/business") ; time.sleep(0.5) # Wall Street Journal Business 1면
+for span in wd.find_elements_by_css_selector('#top-news > div > div.style--grid--SxS2So51.style--full-width--105xgnPD.style--padding-bottom-xlarge--1IYYgHBT.styles--padding-bottom-xlarge--2TlUtTyS.style--margin-bottom--3uv3Nt9X.styles--margin-bottom-large--wa4U95NA.style--border-bottom-dark--3GK54cU_ > div > article > div > h3 > a > span'):
+    news_list_er.append(span.text)
+
+wd.get("https://www.nbcnews.com/business") ; time.sleep(0.5) #NBC Business 1면
+for span in wd.find_elements_by_css_selector('#content > div > div > div.fullWidth.layout-grid-container.layout-index-1 > div > section.pkg.multiUp.multiUp--twoUp.pkg-index-2.multi-up__two-up > div.multi-up__content > div > div > article > div.tease-card__info > h2 > a > span'):
+    news_list_er.append(span.text)
+
+wd.get("https://www.usatoday.com/money/") ; time.sleep(0.5) #USA Today Business 1면
+for a in wd.find_elements_by_css_selector('body > main > div.gnt_pr > div.gnt_m.gnt_m_flm > a'):
+    news_list_er.append(a.text)
+
+wd.get("https://www.bbc.com/news/business") ; time.sleep(0.5) #BBC Business 1면
+for a in wd.find_elements_by_css_selector('#topos-component > div.mpu-available > div.nw-c-seven-slice.gel-layout.b-pw-1280 > div.gel-layout__item.gel-1\/1\@s.gel-1\/2\@m.gel-1\/2\@l.gel-3\/5\@xl.gel-3\/4\@xxl > div > div > div > div.gel-layout__item.gs-u-display-block\@xxl.advert-page > div > div > div > div.gs-c-promo-body.gs-u-mt\@xxs.gs-u-mt\@m.gs-c-promo-body--flex.gs-u-mt\@xs.gs-u-mt0\@xs.gs-u-mt--\@s.gs-u-mt--\@m.gel-1\/2\@xs.gel-1\/1\@s > div > a'):
+    news_list_er.append(a.text)
+
+wd.get("https://www.cnbc.com/business/") ; time.sleep(0.5) #CNBC Business 1면
+for div in wd.find_elements_by_css_selector('#SectionWithNativeTVE-TwoColumnImageDense-BusinessNews-4 > div > div > div > div > div > div > div > div > a > div'):
+    news_list_er.append(div.text)
+
+wd.get("https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB/sections/CAQiSENCQVNNQW9JTDIwdk1EVnFhR2NTQW1WdUdnSlZVeUlPQ0FRYUNnb0lMMjB2TURsek1XWXFEQW9LRWdoQ2RYTnBibVZ6Y3lnQSoqCAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVABUAE?hl=en-US&gl=US&ceid=US%3Aen") ; time.sleep(0.5) #google business1면
+for article in wd.find_elements_by_css_selector('#tabCAQiSENCQVNNQW9JTDIwdk1EVnFhR2NTQW1WdUdnSlZVeUlPQ0FRYUNnb0lMMjB2TURsek1XWXFEQW9LRWdoQ2RYTnBibVZ6Y3lnQSoqCAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVABUAE > div > div > main > c-wiz > div > div > main > div.lBwEZb.BL5WZb.GndZbb > div > div > div > article'):
+    news_list_er.append(article.text)
+
+# news_list_er
+
+cleaned_news_list_er = [re.sub(r'[^\.\?\!\w\d\s]','',a) for a in news_list_er] #불필요한 심볼 삭제
+
+lower_news_list_er = [b.lower() for b in cleaned_news_list_er] #대문자를 소문자로 변환
+
+word_tokens = [] #워드 토큰으로 쪼갬
+for c in lower_news_list_er:
+    nltk.word_tokenize(c)
+    for d in nltk.word_tokenize(c):
+        word_tokens.append(d)
+
+tokens_pos = nltk.pos_tag(word_tokens) #품사 분리 ( ('strategy', 'NN') .. 이런식으로)
+
+NN_words = [] #명사만 추출
+for word, pos in tokens_pos:
+    if 'NN' in pos:
+        NN_words.append(word)
+
+wlem = nltk.WordNetLemmatizer() #원형(lemma) 찾기
+lemmatized_words = []
+for word in NN_words:
+    new_word = wlem.lemmatize(word)
+    lemmatized_words.append(new_word)
+
+final_NN_words = lemmatized_words
+
+customized_stopwords = stopwords.words('english') #불용어 사전
+customized_stopwords += ['be', 'today', 'yesterday','year', "it’s", "don’t",'hour' ,'business' ,
+                         'cnbc','news','day','time','rate']  # 직접 설정한 불용어 사전
+unique_NN_words1 = set(final_NN_words)
+for word in unique_NN_words1:
+    if word in customized_stopwords:
+        while word in final_NN_words: final_NN_words.remove(word)
+
+from collections import Counter
+c = Counter(final_NN_words) # input type should be a list of words (or tokens)
+# print(c)
+# print(c.most_common(20)) # 빈도수 기준 상위 k개 단어 출력
+
+df_er = pd.DataFrame(list(c.items()), columns=['단어','빈도수'])
+df_er.sort_values('빈도수', ascending=False, inplace=True)#빈도수 기준으로 정렬
+df_er_2 = df_er.head(15) #상위 30개만 새로운 DataFrame으로 지정
+
+plt.figure(figsize=(5,5)) #그래프 크기 지정
+plt.xticks(fontsize=10, rotation=45) 
+plt.barh(df_er_2['단어'][::-1], df_er_2['빈도수'][::-1])
+plt.show();
+
+wordcloud = WordCloud(font_path = 'C:/Windows/Fonts/malgun.ttf',background_color='white', colormap = "twilight", max_words=25,  prefer_horizontal=1, width=2000, height=2500).generate_from_frequencies(c)
 # plt.figure(figsize=(5, 10))
 plt.imshow(wordcloud)
 plt.axis('off')
