@@ -1,0 +1,1321 @@
+###### 라이브러리 호출 ######
+import Automatic_def # 숫자를 입력하면 억원 단위로 출력해주는 함수 모음
+from Automatic_def import *
+
+import pandas as pd
+from pandas import DataFrame
+from pandas.tseries.offsets import DateOffset
+
+import numpy as np
+import xlwings as xw
+
+import shutil
+import win32com.client as win32
+
+import pyautogui
+
+import calendar
+import datetime
+from datetime import datetime
+import time
+
+##### 엑셀 Input / 한글 Input & Output 지정 ##### 
+
+######## 엑셀 Input ########
+book_101 = xw.Book('2022년02월말운용현황.xlsx') # 엑셀 파일 열기 ★★★사용자 지정★★★
+sh101 = book_101.sheets('값최종') # 
+sh11p = book_101.sheets('11p') # 
+sh12p = book_101.sheets('12p') # 
+sh13p = book_101.sheets('13p') # 
+sh16p = book_101.sheets('16p') # 
+
+######## 한글 Input & Output ########
+shutil.copyfile(r"./2022년01월운용현황.hwp", r"./2022년02월운용현황.hwp") #★★★사용자 지정★★★
+hwp = win32.gencache.EnsureDispatch("HWPFrame.HwpObject")
+# hwp.RegisterModule("FilePathChecKDLL", "FilePathCheckerModule") # 보안모듈 관련 부분은 추후 재시도할 것 
+hwp.Open(r"C:\Users\이영화\Desktop\python\2_2.FinancialManagement\`22년02월말\2022년02월운용현황.hwp") #★★★사용자 지정★★★
+
+# hwp.GetFieldList() # hwp.GetFieldList(1)
+# len([i for i in hwp.GetFieldList().split('\x02')]) # 누름틀을 확인합니다.
+
+##### page0 (누름틀 3개) #####
+hwp.PutFieldText('page0_1', sh101.range('C2').value)
+hwp.PutFieldText('page0_2', sh101.range('C2').value[:4])
+hwp.PutFieldText('page0_3', int(sh101.range('C2').value.split(" ")[1].replace("월말",""))+1) #★연도 바뀔 때 주의
+
+n월말 = hwp.GetFieldText('page0_1').split(" ")[1]
+
+##### page1 (누름틀 62개 / 누적 65개) #####
+for a in range(0,9): #page1의 자금조달현황에서 C열값을 B열로 옮김
+     hwp.PutFieldText(f"page1_{a+21}",hwp.GetFieldText(f"page1_{a+30}")) 
+        
+hwp.PutFieldText('page1_30',f'22.{n월말}') #C열 채우기 ★연도 바뀔 때 변환
+for a in range(0,8): 
+    hwp.PutFieldText(f'page1_{a+31}',format(round(sh101.range(f'N{a+3}').value),','))
+
+for a in range(0,8): #C-B
+    hwp.PutFieldText(f'page1_{a+39}',format((int(hwp.GetFieldText(f'page1_{a+31}').replace(',',''))-int(hwp.GetFieldText(f'page1_{a+22}').replace(',',''))),','))
+
+for a in range(0,8): #C-A 대비
+    hwp.PutFieldText(f'page1_{a+47}',format((int(hwp.GetFieldText(f'page1_{a+31}').replace(',',''))-int(hwp.GetFieldText(f'page1_{a+13}').replace(',',''))),','))
+
+for a in range(0,8): #C-A 성장률
+    hwp.PutFieldText(f'page1_{a+55}', round((int(hwp.GetFieldText(f'page1_{a+47}').replace(',',''))/int(hwp.GetFieldText(f'page1_{a+13}').replace(',','')))*100,1))
+
+hwp.PutFieldText('page1_4',hwp.GetFieldText('page1_5')) # 총조달자금
+hwp.PutFieldText('page1_5',hwp.GetFieldText('page1_6'))
+hwp.PutFieldText('page1_6',hwp.GetFieldText('page1_21').split(".")[1].replace("말","")+' '+hwp.GetFieldText('page1_2')) 
+hwp.PutFieldText('page1_1', transHangeul(hwp.GetFieldText('page1_38')))
+hwp.PutFieldText('page1_2', transHangeulUpDown(hwp.GetFieldText('page1_54')))
+hwp.PutFieldText('page1_3', transHangeulUpDown(hwp.GetFieldText('page1_46')))
+hwp.PutFieldText('page1_10',hwp.GetFieldText('page1_11')) # 예수금
+hwp.PutFieldText('page1_11',hwp.GetFieldText('page1_12'))
+hwp.PutFieldText('page1_12',hwp.GetFieldText('page1_21').split(".")[1].replace("말","")+' '+hwp.GetFieldText('page1_8'))
+hwp.PutFieldText('page1_7', transHangeul(hwp.GetFieldText('page1_34')))
+hwp.PutFieldText('page1_8', transHangeulUpDown(hwp.GetFieldText('page1_50')))
+hwp.PutFieldText('page1_9', transHangeulUpDown(hwp.GetFieldText('page1_42')))
+
+##### page2 (누름틀 124개 / 누적 189개) #####
+for a in range(0,20): #page2의 자금조달현황에서 C열값을 B열로 옮김
+     hwp.PutFieldText(f"page2_{a+28}",hwp.GetFieldText(f"page2_{a+48}")) 
+
+hwp.PutFieldText('page2_48',f'22.{n월말}') #C열 채우기 ★연도 바뀔 때 주의
+
+for a in range(0,19): 
+    hwp.PutFieldText(f'page2_{a+49}',format(round(sh101.range(f'Q{a+3}').value),','))
+
+for a in range(0,19): #C-B
+    hwp.PutFieldText(f'page2_{a+68}',format((int(hwp.GetFieldText(f'page2_{a+49}').replace(',',''))-int(hwp.GetFieldText(f'page2_{a+29}').replace(',',''))),','))
+
+for a in range(0,19): #C-B
+    hwp.PutFieldText(f'page2_{a+87}',format((int(hwp.GetFieldText(f'page2_{a+49}').replace(',',''))-int(hwp.GetFieldText(f'page2_{a+9}').replace(',',''))),','))
+
+for a in range(0,19): #C-A 성장률
+    hwp.PutFieldText(f'page2_{a+106}', round((int(hwp.GetFieldText(f'page2_{a+87}').replace(',',''))/int(hwp.GetFieldText(f'page2_{a+9}').replace(',','')))*100,1))
+
+hwp.PutFieldText('page2_1',transHangeul(hwp.GetFieldText('page2_63'))) # 수익성자산
+hwp.PutFieldText('page2_2',transHangeulUpDown(hwp.GetFieldText('page2_101')))
+hwp.PutFieldText('page2_3',transHangeulUpDown(hwp.GetFieldText('page2_90')))
+hwp.PutFieldText('page2_4',transHangeulUpDown(hwp.GetFieldText('page2_94')))
+hwp.PutFieldText('page2_5',transHangeulUpDown(hwp.GetFieldText('page2_100')))
+hwp.PutFieldText('page2_6',transHangeulUpDown(hwp.GetFieldText('page2_82')))
+hwp.PutFieldText('page2_7',transHangeul(hwp.GetFieldText('page2_66'))) # 수익성자산 외
+hwp.PutFieldText('page2_8',transHangeul(hwp.GetFieldText('page2_64')))
+
+### page3 (누름틀 112개 / 누적 301개) 
+
+hwp.PutFieldText('page3_40',f'22.{n월말}') #B열 채우기 ★연도 바뀔 때 주의
+
+for a in range(0,17): 
+    hwp.PutFieldText(f'page3_{a+41}',format(round(sh101.range(f'Q{a+3}').value),','))
+
+hwp.PutFieldText('page3_58',format(round(sh101.range('Q21').value),','))
+
+
+for a in range(0,18): #(나)열 채우기
+    hwp.PutFieldText(f'page3_{a+59}', round((int(hwp.GetFieldText(f'page3_{a+41}').replace(',',''))/int(hwp.GetFieldText('page3_58').replace(',','')))*100,1))
+
+for a in range(0,18): #(B/A) 채우기 # 0으로 값을 나누게 될 오류에 대비
+    try:
+        hwp.PutFieldText(f'page3_{a+77}',round((int(hwp.GetFieldText(f'page3_{a+41}').replace(",",''))/int(hwp.GetFieldText(f'page3_{a+4}').replace(",",'')))*100,1))
+    except:  
+        hwp.PutFieldText(f'page3_{a+77}',0)
+    else:    
+        hwp.PutFieldText(f'page3_{a+77}',round((int(hwp.GetFieldText(f'page3_{a+41}').replace(",",''))/int(hwp.GetFieldText(f'page3_{a+4}').replace(",",'')))*100,1))
+
+for a in range(0,18): #(나)-(가) 채우기
+    hwp.PutFieldText(f'page3_{a+95}', round(float(hwp.GetFieldText(f'page3_{a+59}'))-float(hwp.GetFieldText(f'page3_{a+22}')),1))
+
+hwp.PutFieldText('page3_1',transHangeul(hwp.GetFieldText('page3_55'))) # 수익성자산
+hwp.PutFieldText('page3_3', hwp.GetFieldText('page3_91')) # 달성률
+
+### page4 (누름틀 94개 / 누적 395개)
+
+hwp.PutFieldText('page4_34',n월말) # (B)열 채우기
+
+for a in range(0,15):
+    hwp.PutFieldText(f'page4_{a+35}',format(round(sh101.range(f'T{a+3}').value),','))
+
+for a in range(0,15): #(나)열 채우기
+    hwp.PutFieldText(f'page4_{a+50}', round(int(hwp.GetFieldText(f'page4_{a+35}').replace(",",""))/int(hwp.GetFieldText('page4_49').replace(",",""))*100,1))
+
+for a in range(0,15): #(B/A) 채우기 # 0으로 값을 나누게 될 오류에 대비
+    try :
+        hwp.PutFieldText(f'page4_{a+65}',round((int(hwp.GetFieldText(f'page4_{a+35}').replace(",",''))/int(hwp.GetFieldText(f'page4_{a+4}').replace(",",'')))*100,1))
+    except:
+        hwp.PutFieldText(f'page4_{a+65}',0)
+    else:
+        hwp.PutFieldText(f'page4_{a+65}',round((int(hwp.GetFieldText(f'page4_{a+35}').replace(",",''))/int(hwp.GetFieldText(f'page4_{a+4}').replace(",",'')))*100,1))
+        
+for a in range(0,15): #(나)-(가) 채우기
+    hwp.PutFieldText(f'page4_{a+80}', round(float(hwp.GetFieldText(f'page4_{a+50}'))-float(hwp.GetFieldText(f'page4_{a+19}')),1))
+
+hwp.PutFieldText('page4_1',transHangeul(hwp.GetFieldText('page4_49'))) #연간 수익성자산 신규운용
+hwp.PutFieldText('page4_3', hwp.GetFieldText('page4_79')) # 달성률
+
+### page5 (누름틀 94개 / 누적 489개)
+
+hwp.PutFieldText('page5_34',n월말) # (B)열 채우기
+
+for a in range(0,15): #(A)열 채우기
+    hwp.PutFieldText(f'page5_{a+4}',format(round(sh101.range(f'W{a+3}').value),','))
+
+for a in range(0,15): #(가)열 채우기
+    hwp.PutFieldText(f'page5_{a+19}', round((int(hwp.GetFieldText(f'page5_{a+4}').replace(",",""))/int(hwp.GetFieldText('page5_18').replace(",","")))*100,1))
+
+for a in range(0,15): #(B)열 채우기
+    hwp.PutFieldText(f'page5_{a+35}', format(round(sh101.range(f'X{a+3}').value),','))
+
+for a in range(0,15): #(나)열 채우기
+    hwp.PutFieldText(f'page5_{a+50}', round((int(hwp.GetFieldText(f'page5_{a+35}').replace(",",""))/int(hwp.GetFieldText('page5_49').replace(",","")))*100,1))
+
+for a in range(0,15): #(B/A)열 채우기 # 0으로 값을 나누게 될 오류를 대비
+    try :    
+        hwp.PutFieldText(f'page5_{a+65}', round((int(hwp.GetFieldText(f'page5_{a+35}').replace(",",""))/int(hwp.GetFieldText(f'page5_{a+4}').replace(",","")))*100,1))
+    
+    except : # ZeroDivisionError 
+        hwp.PutFieldText(f'page5_{a+65}', 0)
+        
+    else :
+        hwp.PutFieldText(f'page5_{a+65}', round((int(hwp.GetFieldText(f'page5_{a+35}').replace(",",""))/int(hwp.GetFieldText(f'page5_{a+4}').replace(",","")))*100,1))
+
+for a in range(0,15): #(나)-(가) 채우기
+    hwp.PutFieldText(f'page5_{a+80}',round(float(hwp.GetFieldText(f'page5_{a+50}'))-float(hwp.GetFieldText(f'page5_{a+19}')),1))
+
+hwp.PutFieldText('page5_1',n월말.replace("말","")) #(n월 중)
+hwp.PutFieldText('page5_2',transHangeul(hwp.GetFieldText('page5_49'))) #수익성자산 신규운용
+hwp.PutFieldText('page5_3',hwp.GetFieldText('page5_79')) #계획대비 운용 비중
+
+### page6 (누름틀 110개 /  누적 599개)
+
+for a in range(0,15): #평잔 채우기
+    hwp.PutFieldText(f'page6_{a+4}',format(round(sh101.range(f'AA{a+3}').value),','))
+
+for a in range(0,15): #운용손익 채우기
+    hwp.PutFieldText(f'page6_{a+19}',format(round(sh101.range(f'AB{a+3}').value),','))
+
+for a in range(0,16): #N-1월 말 열을 왼쪽으로 
+     hwp.PutFieldText(f"page6_{a+49}",hwp.GetFieldText(f"page6_{a+65}")) 
+
+hwp.PutFieldText('page6_65',n월말)
+
+for a in range(0,15): #N월말 채우기
+     hwp.PutFieldText(f"page6_{a+66}",round(sh101.range(f'AC{a+3}').value,2)) 
+
+for a in range(0,15): #전년말 채우기
+    hwp.PutFieldText(f'page6_{a+81}',round(float(hwp.GetFieldText(f'page6_{a+66}'))-float(hwp.GetFieldText(f'page6_{a+34}')),2))
+
+for a in range(0,15): #전월말 채우기
+    hwp.PutFieldText(f'page6_{a+96}',round(float(hwp.GetFieldText(f'page6_{a+66}'))-float(hwp.GetFieldText(f'page6_{a+50}')),2))
+
+hwp.PutFieldText('page6_1',hwp.GetFieldText('page6_80')) #수익성자산 운용수익률
+hwp.PutFieldText('page6_2', upanddown(hwp.GetFieldText('page6_95'))) #전년말 대비
+hwp.PutFieldText('page6_3', upanddown(hwp.GetFieldText('page6_110'))) #전월말 대비
+
+### page7 (누름틀 110개 /  누적 709개)
+
+for a in range(0,15): #평잔 채우기
+    hwp.PutFieldText(f'page7_{a+4}',format(round(sh101.range(f'AF{a+3}').value),','))
+
+for a in range(0,15): #운용손익 채우기
+     hwp.PutFieldText(f'page7_{a+19}',format(round(sh101.range(f'AG{a+3}').value),','))
+
+for a in range(0,16): #N-1월 말 열을 왼쪽으로 
+      hwp.PutFieldText(f"page7_{a+49}",hwp.GetFieldText(f"page7_{a+65}")) 
+
+hwp.PutFieldText('page7_65',n월말)
+
+for a in range(0,15): #N월말 채우기
+      hwp.PutFieldText(f"page7_{a+66}","{:.2f}".format(sh101.range(f'AH{a+3}').value)) 
+
+for a in range(0,15): #전년말 채우기
+     hwp.PutFieldText(f'page7_{a+81}',"{:.2f}".format(float(hwp.GetFieldText(f'page7_{a+66}'))-float(hwp.GetFieldText(f'page7_{a+34}'))))
+
+for a in range(0,15): #전월말 채우기
+     hwp.PutFieldText(f'page7_{a+96}',"{:.2f}".format(float(hwp.GetFieldText(f'page7_{a+66}'))-float(hwp.GetFieldText(f'page7_{a+50}'))))
+
+hwp.PutFieldText('page7_1',hwp.GetFieldText('page7_80')) #수익성자산 운용수익률
+hwp.PutFieldText('page7_2', upanddown(hwp.GetFieldText('page7_95'))) #전년말 대비
+hwp.PutFieldText('page7_3', upanddown(hwp.GetFieldText('page7_110'))) #전월말 대비
+
+### page8 (누름틀 116개 / 누적 825개)
+
+for a in range(0,18): #평잔 채우기
+    hwp.PutFieldText(f'page8_{a+9}',format(round(sh101.range(f'AK{a+3}').value),','))
+
+for a in range(0,18): #손익 채우기
+    hwp.PutFieldText(f'page8_{a+27}',format(round(sh101.range(f'AL{a+3}').value),','))
+
+for a in range(0,18): #수익률 채우기
+    hwp.PutFieldText(f'page8_{a+45}',"{:.2f}".format(sh101.range(f'AM{a+3}').value))
+
+for a in range(0,18): #평가손익누계 채우기
+    hwp.PutFieldText(f'page8_{a+63}',format(round(sh101.range(f'AN{a+3}').value),','))
+
+for a in range(0,18): #평가손익증감 채우기
+    hwp.PutFieldText(f'page8_{a+81}',format(round(sh101.range(f'AO{a+3}').value),','))
+
+for a in range(0,18): #운용 수익률 채우기
+    hwp.PutFieldText(f'page8_{a+99}',"{:.2f}".format(sh101.range(f'AP{a+3}').value))
+
+hwp.PutFieldText('page8_3',hwp.GetFieldText('page8_4')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page8_4',hwp.GetFieldText('page8_5')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page8_5','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page8_1')) #○ 맨 우측 결산수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page8_1',"{:.2f}".format(float(hwp.GetFieldText('page8_62')))) #□결산수익률
+
+hwp.PutFieldText('page8_6',hwp.GetFieldText('page8_7')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page8_7',hwp.GetFieldText('page8_8')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page8_8','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page8_2')) #○ 맨 우측 운용수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page8_2',"{:.2f}".format(float(hwp.GetFieldText('page8_116')))) #□운용수익률
+
+### page9 (누름틀 62개 / 누적 887개)
+
+for a in range(0,9): #평잔 채우기
+    hwp.PutFieldText(f'page9_{a+9}',format(round(sh101.range(f'AS{a+3}').value),','))
+
+for a in range(0,9): #손익 채우기
+    hwp.PutFieldText(f'page9_{a+18}',format(round(sh101.range(f'AT{a+3}').value),','))
+
+for a in range(0,9): #수익률 채우기
+#     hwp.PutFieldText(f'page9_{a+27}',format(round(sh101.range(f'AU{a+3}').value,2),','))
+    hwp.PutFieldText(f'page9_{a+27}',"{:.2f}".format(sh101.range(f'AU{a+3}').value))
+
+for a in range(0,9): #평가손익누계 채우기
+    hwp.PutFieldText(f'page9_{a+36}',format(round(sh101.range(f'AV{a+3}').value),','))
+
+for a in range(0,9): #평가손익증감 채우기
+    hwp.PutFieldText(f'page9_{a+45}',format(round(sh101.range(f'AW{a+3}').value),','))
+
+for a in range(0,9): #운용 수익률 채우기
+    hwp.PutFieldText(f'page9_{a+54}',"{:.2f}".format(sh101.range(f'AX{a+3}').value))
+
+hwp.PutFieldText('page9_3',hwp.GetFieldText('page9_4')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page9_4',hwp.GetFieldText('page9_5')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page9_5','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page9_1')) #○ 맨 우측 결산수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page9_1',"{:.2f}".format(float(hwp.GetFieldText('page9_35')))) #□결산수익률
+
+hwp.PutFieldText('page9_6',hwp.GetFieldText('page9_7')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page9_7',hwp.GetFieldText('page9_8')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page9_8','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page9_2')) #○ 맨 우측 운용수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page9_2',"{:.2f}".format(float(hwp.GetFieldText('page9_62')))) #□운용수익률
+
+### page10 (누름틀 146개 / 누적 1033개)
+
+for a in range(0,23): #평잔 채우기
+    hwp.PutFieldText(f'page10_{a+9}',format(round(sh101.range(f'BA{a+3}').value),','))
+
+for a in range(0,23): #손익 채우기
+    hwp.PutFieldText(f'page10_{a+32}',format(round(sh101.range(f'BB{a+3}').value),','))
+
+for a in range(0,23): #수익률 채우기
+#     hwp.PutFieldText(f'page10_{a+55}',format(round(sh101.range(f'BC{a+3}').value,2),','))
+    hwp.PutFieldText(f'page10_{a+55}',"{:.2f}".format(sh101.range(f'BC{a+3}').value))
+
+for a in range(0,23): #평가손익누계 채우기
+    hwp.PutFieldText(f'page10_{a+78}',format(round(sh101.range(f'BD{a+3}').value),','))
+
+for a in range(0,23): #평가손익증감 채우기
+    hwp.PutFieldText(f'page10_{a+101}',format(round(sh101.range(f'BE{a+3}').value),','))
+
+for a in range(0,23): #운용 수익률 채우기
+    hwp.PutFieldText(f'page10_{a+124}',"{:.2f}".format(sh101.range(f'BF{a+3}').value))
+
+hwp.PutFieldText('page10_3',hwp.GetFieldText('page10_4')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page10_4',hwp.GetFieldText('page10_5')) #○결산수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page10_5','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page10_1')) #○ 맨 우측 결산수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page10_1',"{:.2f}".format(float(hwp.GetFieldText('page10_77')))) #□결산수익률
+
+hwp.PutFieldText('page10_6',hwp.GetFieldText('page10_7')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page10_7',hwp.GetFieldText('page10_8')) #○운용수익률 한 칸 씩 왼쪽으로
+hwp.PutFieldText('page10_8','('+str(int(n월말.replace('월말',''))-1)+'월) '+hwp.GetFieldText('page10_2')) #○ 맨 우측 운용수익률#★연도 바뀔 때 주의
+hwp.PutFieldText('page10_2',"{:.2f}".format(float(hwp.GetFieldText('page10_146')))) #□운용수익률
+
+### page11 (누름틀 67개 / 누적 1100개)
+
+hwp.PutFieldText('page11_8',format(round(sh11p.range('H3').value),',')) #전년말
+hwp.PutFieldText('page11_9',"{:.2f}".format(sh11p.range('H4').value))
+hwp.PutFieldText('page11_10',"{:.1f}".format(sh11p.range('H5').value))
+hwp.PutFieldText('page11_11',"{:.1f}".format(sh11p.range('H6').value))
+
+for a in range(0,5): #page11의 n-1월말 왼쪽으로 당겨옴
+     hwp.PutFieldText(f"page11_{a+12}",hwp.GetFieldText(f"page11_{a+17}")) 
+
+hwp.PutFieldText('page11_17',sh11p.range('J2').value.replace("월말","")) #n월말
+hwp.PutFieldText('page11_18',format(round(sh11p.range('J3').value),','))
+hwp.PutFieldText('page11_19',"{:.2f}".format(sh11p.range('J4').value))
+hwp.PutFieldText('page11_20',"{:.1f}".format(sh11p.range('J5').value))
+hwp.PutFieldText('page11_21',"{:.1f}".format(sh11p.range('J6').value))
+
+hwp.PutFieldText('page11_22',format(round(float(hwp.GetFieldText('page11_18').replace(",",""))-float(hwp.GetFieldText('page11_8').replace(",",""))),','))
+
+hwp.PutFieldText('page11_23',round(float(hwp.GetFieldText('page11_19'))-float(hwp.GetFieldText('page11_9')),2))
+hwp.PutFieldText('page11_24',round(float(hwp.GetFieldText('page11_20'))-float(hwp.GetFieldText('page11_10')),2))
+hwp.PutFieldText('page11_25',round(float(hwp.GetFieldText('page11_21'))-float(hwp.GetFieldText('page11_11')),2))
+
+hwp.PutFieldText('page11_26',format(round(float(hwp.GetFieldText('page11_18').replace(",",""))-float(hwp.GetFieldText('page11_13').replace(",",""))),','))
+
+hwp.PutFieldText('page11_27',round(float(hwp.GetFieldText('page11_19'))-float(hwp.GetFieldText('page11_14')),2))
+hwp.PutFieldText('page11_28',round(float(hwp.GetFieldText('page11_20'))-float(hwp.GetFieldText('page11_15')),2))
+hwp.PutFieldText('page11_29',round(float(hwp.GetFieldText('page11_21'))-float(hwp.GetFieldText('page11_16')),2))
+
+hwp.PutFieldText('page11_30',sh11p.range('J2').value.replace("월말",""))
+
+hwp.PutFieldText('page11_31',format(round(sh11p.range('M3').value),',')) #계획
+hwp.PutFieldText('page11_32',"{:.2f}".format(sh11p.range('M4').value))
+hwp.PutFieldText('page11_33',"{:.1f}".format(sh11p.range('M5').value))
+hwp.PutFieldText('page11_34',"{:.1f}".format(sh11p.range('M6').value))
+
+hwp.PutFieldText('page11_35',format(round(sh11p.range('N3').value),',')) #실적
+hwp.PutFieldText('page11_36',"{:.2f}".format(sh11p.range('N4').value))
+hwp.PutFieldText('page11_37',"{:.1f}".format(sh11p.range('N5').value))
+hwp.PutFieldText('page11_38',"{:.1f}".format(sh11p.range('N6').value))
+
+hwp.PutFieldText('page11_39',"{:.1f}".format(sh11p.range('O3').value))
+hwp.PutFieldText('page11_40',"{:.1f}".format(sh11p.range('O4').value))
+hwp.PutFieldText('page11_41',"{:.1f}".format(sh11p.range('O5').value))
+hwp.PutFieldText('page11_42',"{:.1f}".format(sh11p.range('O6').value))
+
+for a in range(0,3): #평잔 채우기
+    hwp.PutFieldText(f'page11_{a+46}',format(round(sh11p.range(f'H{a+17}').value),','))
+
+for a in range(0,3): #손익 채우기
+    hwp.PutFieldText(f'page11_{a+49}',format(round(sh11p.range(f'I{a+17}').value),','))
+
+for a in range(0,3): #수익률 채우기
+    hwp.PutFieldText(f'page11_{a+52}',format(round(sh11p.range(f'J{a+17}').value,2),','))
+
+for a in range(0,3): #전년말 채우기
+    hwp.PutFieldText(f'page11_{a+55}',format(round(sh11p.range(f'K{a+17}').value),','))
+
+hwp.PutFieldText('page11_58',n월말.replace("월말",""))
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page11_{a+59}',format(round(sh11p.range(f'L{a+17}').value),','))
+
+for a in range(0,3): #증감 채우기
+    hwp.PutFieldText(f'page11_{a+62}',format(round(sh11p.range(f'M{a+17}').value),','))
+
+for a in range(0,3): #운용수익률 채우기
+    hwp.PutFieldText(f'page11_{a+65}',format(round(sh11p.range(f'N{a+17}').value,2),','))
+
+hwp.PutFieldText('page11_1',transHangeul(hwp.GetFieldText('page11_18'))) #□채권운용 잔액
+hwp.PutFieldText('page11_2',transHangeulUpDown(hwp.GetFieldText('page11_22'))) #○전년말 대비
+hwp.PutFieldText('page11_3',transHangeulUpDown(hwp.GetFieldText('page11_26'))) #○전월말 대비
+
+hwp.PutFieldText('page11_4',n월말.replace("말",""))
+
+hwp.PutFieldText('page11_5',transHangeul(hwp.GetFieldText('page11_35'))) #□신규운용금액
+hwp.PutFieldText('page11_6',hwp.GetFieldText('page11_36')) #○수익률
+hwp.PutFieldText('page11_7',hwp.GetFieldText('page11_37')) #○평균만기
+
+hwp.PutFieldText('page11_43', hwp.GetFieldText('page11_54')) #□국채채권결산수익률
+hwp.PutFieldText('page11_44',transHangeul(hwp.GetFieldText('page11_51'))) #○결산손익
+hwp.PutFieldText('page11_45',hwp.GetFieldText('page11_67')) #○수익률
+
+### page12 (누름틀 109개 / 누적 1209개)
+
+hwp.PutFieldText('page12_49',n월말+" ")
+
+hwp.PutFieldText('page12_4',format(round(sh12p.range('E38').value),',')) #장기채권펀드 국채 채우기
+hwp.PutFieldText('page12_5',"{:.2f}".format(sh12p.range('E39').value))
+hwp.PutFieldText('page12_6',"{:.1f}".format(sh12p.range('E40').value))
+hwp.PutFieldText('page12_7',"{:.1f}".format(sh12p.range('E41').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+8}',format(round(sh12p.range(f'E{a+42}').value),','))
+
+hwp.PutFieldText('page12_11',"{:.2f}".format(sh12p.range('E45').value))
+hwp.PutFieldText('page12_12',"{:.2f}".format(sh12p.range('E46').value))
+
+hwp.PutFieldText('page12_13',format(round(sh12p.range('F38').value),',')) #장기채권펀드 공사채 채우기
+hwp.PutFieldText('page12_14',"{:.2f}".format(sh12p.range('F39').value))
+hwp.PutFieldText('page12_15',"{:.1f}".format(sh12p.range('F40').value))
+hwp.PutFieldText('page12_16',"{:.1f}".format(sh12p.range('F41').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+17}',format(round(sh12p.range(f'F{a+42}').value),','))
+
+hwp.PutFieldText('page12_20',"{:.2f}".format(sh12p.range('F45').value))
+hwp.PutFieldText('page12_21',"{:.2f}".format(sh12p.range('F46').value))
+
+hwp.PutFieldText('page12_22',format(round(sh12p.range('G38').value),',')) #장기채권펀드 은행채 채우기
+hwp.PutFieldText('page12_23',"{:.2f}".format(sh12p.range('G39').value))
+hwp.PutFieldText('page12_24',"{:.1f}".format(sh12p.range('G40').value))
+hwp.PutFieldText('page12_25',"{:.1f}".format(sh12p.range('G41').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+26}',format(round(sh12p.range(f'G{a+42}').value),','))
+
+hwp.PutFieldText('page12_29',"{:.2f}".format(sh12p.range('G45').value))
+hwp.PutFieldText('page12_30',"{:.2f}".format(sh12p.range('G46').value))
+
+hwp.PutFieldText('page12_31',format(round(sh12p.range('H38').value),',')) #장기채권펀드 회사채 채우기
+hwp.PutFieldText('page12_32',"{:.2f}".format(sh12p.range('H39').value))
+hwp.PutFieldText('page12_33',"{:.1f}".format(sh12p.range('H40').value))
+hwp.PutFieldText('page12_34',"{:.1f}".format(sh12p.range('H41').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+35}',format(round(sh12p.range(f'H{a+42}').value),','))
+
+hwp.PutFieldText('page12_38',"{:.2f}".format(sh12p.range('H45').value))
+hwp.PutFieldText('page12_39',"{:.2f}".format(sh12p.range('H46').value))
+
+hwp.PutFieldText('page12_40',format(round(sh12p.range('I38').value),',')) #장기채권펀드 계 채우기
+hwp.PutFieldText('page12_41',"{:.2f}".format(sh12p.range('I39').value))
+hwp.PutFieldText('page12_42',"{:.1f}".format(sh12p.range('I40').value))
+hwp.PutFieldText('page12_43',"{:.1f}".format(sh12p.range('I41').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+44}',format(round(sh12p.range(f'I{a+42}').value),','))
+
+hwp.PutFieldText('page12_47',"{:.2f}".format(sh12p.range('I45').value))
+hwp.PutFieldText('page12_48',"{:.2f}".format(sh12p.range('I46').value))
+
+hwp.PutFieldText('page12_1', transHangeul(hwp.GetFieldText('page12_40'))) #○장기채권펀드 잔액
+hwp.PutFieldText('page12_2', hwp.GetFieldText('page12_47')) #○장기채권펀드 수익률
+hwp.PutFieldText('page12_3', hwp.GetFieldText('page12_48')) #○장기채권펀드 운용
+
+hwp.PutFieldText('page12_53',format(round(sh12p.range('E49').value),',')) #상환고유동성펀드 국채 채우기
+hwp.PutFieldText('page12_54',"{:.2f}".format(sh12p.range('E50').value))
+hwp.PutFieldText('page12_55',"{:.1f}".format(sh12p.range('E51').value))
+hwp.PutFieldText('page12_56',"{:.1f}".format(sh12p.range('E52').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+57}',format(round(sh12p.range(f'E{a+53}').value),','))
+
+hwp.PutFieldText('page12_60',"{:.2f}".format(sh12p.range('E56').value))
+hwp.PutFieldText('page12_61',"{:.2f}".format(sh12p.range('E57').value))
+
+hwp.PutFieldText('page12_62',format(round(sh12p.range('F49').value),',')) #상환고유동성펀드 특은채 채우기
+hwp.PutFieldText('page12_63',"{:.2f}".format(sh12p.range('F50').value))
+hwp.PutFieldText('page12_64',"{:.1f}".format(sh12p.range('F51').value))
+hwp.PutFieldText('page12_65',"{:.1f}".format(sh12p.range('F52').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+66}',format(round(sh12p.range(f'F{a+53}').value),','))
+
+hwp.PutFieldText('page12_69',"{:.2f}".format(sh12p.range('F56').value))
+hwp.PutFieldText('page12_70',"{:.2f}".format(sh12p.range('F57').value))
+
+hwp.PutFieldText('page12_71',format(round(sh12p.range('G49').value),',')) #상환고유동성펀드 계 채우기
+hwp.PutFieldText('page12_72',"{:.2f}".format(sh12p.range('G50').value))
+hwp.PutFieldText('page12_73',"{:.1f}".format(sh12p.range('G51').value))
+hwp.PutFieldText('page12_74',"{:.1f}".format(sh12p.range('G52').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+75}',format(round(sh12p.range(f'G{a+53}').value),','))
+
+hwp.PutFieldText('page12_78',"{:.2f}".format(sh12p.range('G56').value))
+hwp.PutFieldText('page12_79',"{:.2f}".format(sh12p.range('G57').value))
+
+hwp.PutFieldText('page12_50', transHangeul(hwp.GetFieldText('page12_71'))) #○상환고유동성펀드 잔액
+hwp.PutFieldText('page12_51', hwp.GetFieldText('page12_78')) #○상환고유동성펀드 수익률
+hwp.PutFieldText('page12_52', hwp.GetFieldText('page12_79')) #○상환고유동성펀드 운용
+
+hwp.PutFieldText('page12_83',format(round(sh12p.range('E60').value),',')) #정기MBS펀드 MBS 채우기
+hwp.PutFieldText('page12_84',"{:.2f}".format(sh12p.range('E61').value))
+hwp.PutFieldText('page12_85',"{:.1f}".format(sh12p.range('E62').value))
+hwp.PutFieldText('page12_86',"{:.1f}".format(sh12p.range('E63').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+87}',format(round(sh12p.range(f'E{a+64}').value),','))
+
+hwp.PutFieldText('page12_90',"{:.2f}".format(sh12p.range('E67').value))
+hwp.PutFieldText('page12_91',"{:.2f}".format(sh12p.range('E68').value))
+
+hwp.PutFieldText('page12_92',format(round(sh12p.range('F60').value),',')) #정기MBS펀드 은행채 채우기
+hwp.PutFieldText('page12_93',"{:.2f}".format(sh12p.range('F61').value))
+hwp.PutFieldText('page12_94',"{:.1f}".format(sh12p.range('F62').value))
+hwp.PutFieldText('page12_95',"{:.1f}".format(sh12p.range('F63').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+96}',format(round(sh12p.range(f'F{a+64}').value),','))
+
+hwp.PutFieldText('page12_99',"{:.2f}".format(sh12p.range('F67').value))
+hwp.PutFieldText('page12_100',"{:.2f}".format(sh12p.range('F68').value))
+
+hwp.PutFieldText('page12_101',format(round(sh12p.range('G60').value),',')) #정기MBS펀드 MBS 채우기
+hwp.PutFieldText('page12_102',"{:.2f}".format(sh12p.range('G61').value))
+hwp.PutFieldText('page12_103',"{:.1f}".format(sh12p.range('G62').value))
+hwp.PutFieldText('page12_104',"{:.1f}".format(sh12p.range('G63').value))
+
+for a in range(0,3): 
+    hwp.PutFieldText(f'page12_{a+105}',format(round(sh12p.range(f'G{a+64}').value),','))
+
+hwp.PutFieldText('page12_108',"{:.2f}".format(sh12p.range('G67').value))
+hwp.PutFieldText('page12_109',"{:.2f}".format(sh12p.range('G68').value))
+
+hwp.PutFieldText('page12_80', transHangeul(hwp.GetFieldText('page12_101'))) #○정기MBS펀드 잔액
+hwp.PutFieldText('page12_81', hwp.GetFieldText('page12_108')) #○정기MBS펀드 수익률
+hwp.PutFieldText('page12_82', hwp.GetFieldText('page12_109')) #○정기MBS펀드 운용
+
+### page13 (누름틀 145개 / 누적 1354개)
+
+for a in range(0,8): #금액 채우기
+    hwp.PutFieldText(f'page13_{a+1}',format(round(sh13p.range(f'D{a+5}').value),','))
+
+for a in range(0,8): #비중 채우기
+    hwp.PutFieldText(f'page13_{a+9}', round(sh13p.range(f'E{a+5}').value,1))
+
+for a in range(0,8): #수익률 채우기
+    hwp.PutFieldText(f'page13_{a+17}', round(sh13p.range(f'F{a+5}').value,2))
+
+for a in range(0,8): #만기 채우기
+    hwp.PutFieldText(f'page13_{a+25}', round(sh13p.range(f'G{a+5}').value,1))
+
+hwp.PutFieldText('page13_33', n월말)
+
+for a in range(0,8): #금액 채우기
+    hwp.PutFieldText(f'page13_{a+34}',format(round(sh13p.range(f'H{a+5}').value),','))
+
+for a in range(0,8): #비중 채우기
+    hwp.PutFieldText(f'page13_{a+42}', round(sh13p.range(f'I{a+5}').value,1))
+
+for a in range(0,8): #수익률 채우기
+    hwp.PutFieldText(f'page13_{a+50}', round(sh13p.range(f'J{a+5}').value,2))
+
+for a in range(0,8): #만기 채우기
+    hwp.PutFieldText(f'page13_{a+58}', round(sh13p.range(f'K{a+5}').value,1))
+
+for a in range(0,8): #금액 채우기
+    hwp.PutFieldText(f'page13_{a+66}',format(round(sh13p.range(f'L{a+5}').value),','))
+
+for a in range(0,8): #비중 채우기
+    hwp.PutFieldText(f'page13_{a+74}', round(sh13p.range(f'M{a+5}').value,2))
+
+for a in range(0,8): #수익률 채우기
+    hwp.PutFieldText(f'page13_{a+82}', round(sh13p.range(f'N{a+5}').value,2))
+
+for a in range(0,8): #만기 채우기
+    hwp.PutFieldText(f'page13_{a+90}', round(sh13p.range(f'O{a+5}').value,1))
+
+# <만기도래 연도별, 종류별 채권비중 >  
+for a in range(0,6): #국채 채우기
+    hwp.PutFieldText(f'page13_{a+98}',format(round(sh13p.range(f'C{a+16}').value),','))
+
+for a in range(0,6): #지방채 채우기
+    hwp.PutFieldText(f'page13_{a+104}',format(round(sh13p.range(f'D{a+16}').value),','))
+
+for a in range(0,6): #공사채 채우기
+    hwp.PutFieldText(f'page13_{a+110}',format(round(sh13p.range(f'E{a+16}').value),','))
+
+for a in range(0,6): #금융채 채우기
+    hwp.PutFieldText(f'page13_{a+116}',format(round(sh13p.range(f'F{a+16}').value),','))
+
+for a in range(0,6): #회사채 채우기
+    hwp.PutFieldText(f'page13_{a+122}',format(round(sh13p.range(f'G{a+16}').value),','))
+
+for a in range(0,6): #구조화예금 채우기
+    hwp.PutFieldText(f'page13_{a+128}',format(round(sh13p.range(f'H{a+16}').value),','))
+
+for a in range(0,6): # 합계 채우기
+    hwp.PutFieldText(f'page13_{a+134}',format(round(sh13p.range(f'I{a+16}').value),','))
+
+for a in range(0,6): #비중 채우기
+    hwp.PutFieldText(f'page13_{a+140}',round(sh13p.range(f'J{a+16}').value,1))
+
+### page14 (누름틀 102개 / 누적 1456개)
+
+#운용현황
+for a in range(0,6): #작년말 채우기
+    hwp.PutFieldText(f'page14_{a+5}',format(round(sh101.range(f'BI{a+3}').value),','))
+
+for a in range(0,7): #page14의 n-1월말 왼쪽으로 당겨옴
+     hwp.PutFieldText(f"page14_{a+11}",hwp.GetFieldText(f"page14_{a+18}"))
+
+hwp.PutFieldText('page14_18',n월말.replace("월말","")) #n월말
+
+for a in range(0,6): #n월말 채우기
+    hwp.PutFieldText(f'page14_{a+19}',format(round(sh101.range(f'BJ{a+3}').value),','))
+
+for a in range(0,6): #전년말 
+    hwp.PutFieldText(f'page14_{a+25}',format(round(float(hwp.GetFieldText(f'page14_{a+19}').replace(",",""))-float(hwp.GetFieldText(f'page14_{a+5}').replace(",",""))),','))
+
+for a in range(0,6): #전월말
+    hwp.PutFieldText(f'page14_{a+31}',format(round(float(hwp.GetFieldText(f'page14_{a+19}').replace(",",""))-float(hwp.GetFieldText(f'page14_{a+12}').replace(",",""))),','))
+
+hwp.PutFieldText('page14_37',n월말.replace("월말","")) #n월 신규 계획 대비 실적
+
+for a in range(0,6): #계획 채우기
+    hwp.PutFieldText(f'page14_{a+38}',format(round(sh101.range(f'BK{a+3}').value),','))
+
+for a in range(0,6): #실적 채우기
+    hwp.PutFieldText(f'page14_{a+44}',format(round(sh101.range(f'BL{a+3}').value),','))
+
+for a in range(0,6): #달성률 채우기
+    hwp.PutFieldText(f'page14_{a+50}',round(sh101.range(f'BM{a+3}').value,1))
+
+hwp.PutFieldText('page14_1', transHangeul(hwp.GetFieldText('page14_24'))) #국내위탁 잔액
+hwp.PutFieldText('page14_2', transHangeulUpDown(hwp.GetFieldText('page14_30'))) #전년말 대비
+hwp.PutFieldText('page14_3', transHangeulUpDown(hwp.GetFieldText('page14_36'))) #전월말 대비
+hwp.PutFieldText('page14_102',n월말.replace("월말",""))
+hwp.PutFieldText('page14_4', transHangeul(hwp.GetFieldText('page14_49')))
+
+#손익현황
+for a in range(0,6): #평잔 채우기
+    hwp.PutFieldText(f'page14_{a+59}',format(round(sh101.range(f'BI{a+11}').value),','))
+
+for a in range(0,6): #손익 채우기
+    hwp.PutFieldText(f'page14_{a+65}',format(round(sh101.range(f'BJ{a+11}').value),','))
+
+for a in range(0,6): #수익률 채우기
+    hwp.PutFieldText(f'page14_{a+71}',"{:.2f}".format(sh101.range(f'BK{a+11}').value))
+
+for a in range(0,6): #전년말 채우기
+    hwp.PutFieldText(f'page14_{a+77}',format(round(sh101.range(f'BL{a+11}').value),','))
+
+hwp.PutFieldText('page14_83',n월말) #n월말
+
+for a in range(0,6): #n월말 채우기
+    hwp.PutFieldText(f'page14_{a+84}',format(round(sh101.range(f'BM{a+11}').value),','))
+
+for a in range(0,6): # 증감 채우기
+    hwp.PutFieldText(f'page14_{a+90}',format(round(sh101.range(f'BN{a+11}').value),','))
+
+for a in range(0,6): #운용 수익률 채우기
+    hwp.PutFieldText(f'page14_{a+96}',"{:.2f}".format(sh101.range(f'BO{a+11}').value))
+
+hwp.PutFieldText('page14_56', hwp.GetFieldText('page14_76')) #위탁운용 결산수익률
+hwp.PutFieldText('page14_57', transHangeul(hwp.GetFieldText('page14_70'))) #결산손익
+hwp.PutFieldText('page14_58', hwp.GetFieldText('page14_101')) #운용수익률
+
+### page15 (누름틀 73개 / 누적 1529개)
+
+#운용현황
+for a in range(0,6): #작년말 채우기
+    hwp.PutFieldText(f'page15_{a+5}',format(round(sh101.range(f'BR{a+3}').value),','))
+
+for a in range(0,7): #page15의 n-1월말 왼쪽으로 당겨옴
+     hwp.PutFieldText(f"page15_{a+11}",hwp.GetFieldText(f"page15_{a+18}"))
+
+hwp.PutFieldText('page15_18',n월말) #n월말
+
+for a in range(0,6): #n월말 채우기
+    hwp.PutFieldText(f'page15_{a+19}',format(round(sh101.range(f'BS{a+3}').value),','))
+
+for a in range(0,6): #전년말 
+    hwp.PutFieldText(f'page15_{a+25}',format(round(float(hwp.GetFieldText(f'page15_{a+19}').replace(",",""))-float(hwp.GetFieldText(f'page15_{a+5}').replace(",",""))),','))
+
+for a in range(0,6): #전월말
+    hwp.PutFieldText(f'page15_{a+31}',format(round(float(hwp.GetFieldText(f'page15_{a+19}').replace(",",""))-float(hwp.GetFieldText(f'page15_{a+12}').replace(",",""))),','))
+
+hwp.PutFieldText('page15_37',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+
+hwp.PutFieldText('page15_38',format(round(sh101.range('BT3').value),','))
+
+hwp.PutFieldText('page15_39',format(round(sh101.range('BT8').value),','))
+
+for a in range(0,6): #실적 채우기
+    hwp.PutFieldText(f'page15_{a+40}',format(round(sh101.range(f'BU{a+3}').value),','))
+
+hwp.PutFieldText('page15_46',"{:.1f}".format(sh101.range('BV3').value))
+
+hwp.PutFieldText('page15_47',"{:.1f}".format(sh101.range('BV8').value))
+
+hwp.PutFieldText('page15_1', transHangeul(hwp.GetFieldText('page15_24'))) #국내주식 잔액
+hwp.PutFieldText('page15_2', transHangeulUpDown(hwp.GetFieldText('page15_30'))) #전년말 대비
+hwp.PutFieldText('page15_3', transHangeulUpDown(hwp.GetFieldText('page15_36'))) #전월말 대비
+hwp.PutFieldText('page15_73',n월말.replace("월말",""))
+hwp.PutFieldText('page15_4', transHangeul(hwp.GetFieldText('page15_45')))
+
+#손익현황
+for a in range(0,3): #평잔 채우기
+    hwp.PutFieldText(f'page15_{a+51}',format(round(sh101.range(f'BR{a+11}').value),','))
+
+for a in range(0,3): #손익 채우기
+    hwp.PutFieldText(f'page15_{a+54}',format(round(sh101.range(f'BS{a+11}').value),','))
+
+for a in range(0,3): #수익률 채우기
+    hwp.PutFieldText(f'page15_{a+57}',"{:.2f}".format(sh101.range(f'BT{a+11}').value))
+
+for a in range(0,3): #전년말 채우기
+    hwp.PutFieldText(f'page15_{a+60}',format(round(sh101.range(f'BU{a+11}').value),','))
+
+hwp.PutFieldText('page15_63',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page15_{a+64}',format(round(sh101.range(f'BV{a+11}').value),','))
+
+for a in range(0,3): #증감 채우기
+    hwp.PutFieldText(f'page15_{a+67}',format(round(sh101.range(f'BW{a+11}').value),','))
+
+for a in range(0,3): #운용 수익률 채우기
+    hwp.PutFieldText(f'page15_{a+70}',"{:.2f}".format(sh101.range(f'BX{a+11}').value))
+
+hwp.PutFieldText('page15_48', hwp.GetFieldText('page15_59')) #직접운용 결산수익률
+hwp.PutFieldText('page15_49', transHangeul(hwp.GetFieldText('page15_56'))) #결산손익
+hwp.PutFieldText('page15_50', hwp.GetFieldText('page15_72')) #운용수익률
+
+### page16 (누름틀 99개 / 누적 1628개)
+
+#주식 익스포져 현황
+for a in range(0,9): #작년말 채우기
+    hwp.PutFieldText(f'page16_{a+4}',format(round(sh16p.range(f'D{a+5}').value),','))
+
+for a in range(0,9): #운용한도 채우기
+    hwp.PutFieldText(f'page16_{a+13}',format(round(sh16p.range(f'E{a+5}').value),','))
+
+hwp.PutFieldText('page16_22',n월말) #n월말
+
+for a in range(0,9): #n월말 채우기
+    hwp.PutFieldText(f'page16_{a+23}',format(round(sh16p.range(f'F{a+5}').value),','))
+
+for a in range(0,9): #전년말 채우기
+    hwp.PutFieldText(f'page16_{a+32}',format(round(sh16p.range(f'G{a+5}').value),','))
+
+for a in range(0,9): #목표대비 채우기
+    hwp.PutFieldText(f'page16_{a+41}',format(round(sh16p.range(f'H{a+5}').value),','))
+
+hwp.PutFieldText('page16_1', transHangeul(hwp.GetFieldText('page16_31'))) #국내주식 잔액
+hwp.PutFieldText('page16_2', transHangeulUpDown(hwp.GetFieldText('page16_40'))) #전년말 대비
+hwp.PutFieldText('page16_3', transHangeulUpDown(hwp.GetFieldText('page16_49'))) #전월말 대비
+
+hwp.PutFieldText('page16_50',n월말) #n월말
+
+#주식 익스포져 평가손익
+for a in range(0,12): #n월말 실현손익 채우기
+    hwp.PutFieldText(f'page16_{a+51}',format(round(sh16p.range(f'D{a+17}').value),','))
+
+for a in range(0,12): #전년말 채우기
+    hwp.PutFieldText(f'page16_{a+63}',format(round(sh16p.range(f'E{a+17}').value),','))
+
+hwp.PutFieldText('page16_75',n월말) #n월말
+
+for a in range(0,12): #n월말 채우기
+    hwp.PutFieldText(f'page16_{a+76}',format(round(sh16p.range(f'F{a+17}').value),','))
+
+for a in range(0,12): #증감 채우기
+    hwp.PutFieldText(f'page16_{a+88}',format(round(sh16p.range(f'G{a+17}').value),','))
+
+### page17 (누름틀 55개 / 누적 1683개)
+
+#운용현황
+for a in range(0,3): #작년말 채우기
+    hwp.PutFieldText(f'page17_{a+6}',format(round(sh101.range(f'CA{a+3}').value),','))
+
+for a in range(0,4): #page17의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page17_{a+9}",hwp.GetFieldText(f"page17_{a+13}"))
+
+hwp.PutFieldText('page17_13',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page17_{a+14}',format(round(sh101.range(f'CB{a+3}').value),','))
+
+for a in range(0,3): #전년말 
+    hwp.PutFieldText(f'page17_{a+17}',format(round(float(hwp.GetFieldText(f'page17_{a+14}').replace(",",""))-float(hwp.GetFieldText(f'page17_{a+6}').replace(",",""))),','))
+
+for a in range(0,3): #전월말
+    hwp.PutFieldText(f'page17_{a+20}',format(round(float(hwp.GetFieldText(f'page17_{a+14}').replace(",",""))-float(hwp.GetFieldText(f'page17_{a+10}').replace(",",""))),','))
+
+hwp.PutFieldText('page17_23',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+
+hwp.PutFieldText('page17_24',format(round(sh101.range('CC3').value),',')) #계획 채우기
+
+hwp.PutFieldText('page17_25',format(round(sh101.range('CC5').value),','))
+
+for a in range(0,3): #실적 채우기
+    hwp.PutFieldText(f'page17_{a+26}',format(round(sh101.range(f'CD{a+3}').value),','))
+
+hwp.PutFieldText('page17_29',"{:.1f}".format(sh101.range('CE3').value)) #달성률 채우기
+hwp.PutFieldText('page17_30',"{:.1f}".format(sh101.range('CE5').value))
+
+hwp.PutFieldText('page17_1', transHangeul(hwp.GetFieldText('page17_16'))) #해왜채권 잔액
+hwp.PutFieldText('page17_2', transHangeulUpDown(hwp.GetFieldText('page17_19'))) #전년말 대비
+hwp.PutFieldText('page17_3', transHangeulUpDown(hwp.GetFieldText('page17_22'))) #전월말 대비
+hwp.PutFieldText('page17_4',n월말.replace("월말",""))
+hwp.PutFieldText('page17_5', transHangeul(hwp.GetFieldText('page17_28')))
+
+#손익현황
+for a in range(0,3): #평잔 채우기
+    hwp.PutFieldText(f'page17_{a+34}',format(round(sh101.range(f'CA{a+8}').value),','))
+
+for a in range(0,3): #손익 채우기
+    hwp.PutFieldText(f'page17_{a+37}',format(round(sh101.range(f'CB{a+8}').value),','))
+
+for a in range(0,3): #수익률 채우기
+    hwp.PutFieldText(f'page17_{a+40}',"{:.2f}".format(sh101.range(f'CC{a+8}').value))
+
+for a in range(0,3): #전년말 채우기
+    hwp.PutFieldText(f'page17_{a+43}',format(round(sh101.range(f'CD{a+8}').value),','))
+
+hwp.PutFieldText('page17_46',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page17_{a+47}',format(round(sh101.range(f'CE{a+8}').value),','))
+
+for a in range(0,3): #증감 채우기
+    hwp.PutFieldText(f'page17_{a+50}',format(round(sh101.range(f'CF{a+8}').value),','))
+
+for a in range(0,3): #운용 수익률 채우기
+    hwp.PutFieldText(f'page17_{a+53}',"{:.2f}".format(sh101.range(f'CG{a+8}').value))
+
+hwp.PutFieldText('page17_31', hwp.GetFieldText('page17_42')) #해외채권 결산수익률
+hwp.PutFieldText('page17_32', transHangeul(hwp.GetFieldText('page17_39'))) #결산손익
+hwp.PutFieldText('page17_33', hwp.GetFieldText('page17_55')) #운용수익률
+
+### page18 (누름틀 68개 / 누적 1751개)
+
+#운용현황
+for a in range(0,4): #작년말 채우기
+    hwp.PutFieldText(f'page18_{a+6}',format(round(sh101.range(f'CJ{a+3}').value),','))
+
+for a in range(0,5): #page18의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page18_{a+10}",hwp.GetFieldText(f"page18_{a+15}"))
+
+hwp.PutFieldText('page18_15',n월말) #n월말
+
+for a in range(0,4): #n월말 채우기
+    hwp.PutFieldText(f'page18_{a+16}',format(round(sh101.range(f'CK{a+3}').value),','))
+
+for a in range(0,4): #전년말 
+    hwp.PutFieldText(f'page18_{a+20}',format(round(float(hwp.GetFieldText(f'page18_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page18_{a+6}').replace(",",""))),','))
+
+for a in range(0,4): #전월말
+    hwp.PutFieldText(f'page18_{a+24}',format(round(float(hwp.GetFieldText(f'page18_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page18_{a+11}').replace(",",""))),','))
+
+hwp.PutFieldText('page18_28',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page18_29',format(round(sh101.range('CL3').value),',')) #계획 채우기
+hwp.PutFieldText('page18_30',format(round(sh101.range('CL6').value),','))
+
+for a in range(0,4): #실적 채우기
+    hwp.PutFieldText(f'page18_{a+31}',format(round(sh101.range(f'CM{a+3}').value),','))
+
+hwp.PutFieldText('page18_35',"{:.1f}".format(sh101.range('CN3').value)) #달성률 채우기
+hwp.PutFieldText('page18_36',"{:.1f}".format(sh101.range('CN6').value))
+
+hwp.PutFieldText('page18_1', transHangeul(hwp.GetFieldText('page18_19'))) #해외위탁 잔액
+hwp.PutFieldText('page18_2', transHangeulUpDown(hwp.GetFieldText('page18_23'))) #전년말 대비
+hwp.PutFieldText('page18_3', transHangeulUpDown(hwp.GetFieldText('page18_27'))) #전월말 대비
+hwp.PutFieldText('page18_4',n월말.replace("월말",""))
+hwp.PutFieldText('page18_5', transHangeul(hwp.GetFieldText('page18_34')))
+
+#손익현황
+for a in range(0,4): #평잔 채우기
+    hwp.PutFieldText(f'page18_{a+40}',format(round(sh101.range(f'CJ{a+9}').value),','))
+
+for a in range(0,4): #손익 채우기
+    hwp.PutFieldText(f'page18_{a+44}',format(round(sh101.range(f'CK{a+9}').value),','))
+
+for a in range(0,4): #수익률 채우기
+    hwp.PutFieldText(f'page18_{a+48}',"{:.2f}".format(sh101.range(f'CL{a+9}').value))
+
+for a in range(0,4): #전년말 채우기
+    hwp.PutFieldText(f'page18_{a+52}',format(round(sh101.range(f'CM{a+9}').value),','))
+
+hwp.PutFieldText('page18_56',n월말) #n월말
+
+for a in range(0,4): #n월말 채우기
+    hwp.PutFieldText(f'page18_{a+57}',format(round(sh101.range(f'CN{a+9}').value),','))
+
+for a in range(0,4): #증감 채우기
+    hwp.PutFieldText(f'page18_{a+61}',format(round(sh101.range(f'CO{a+9}').value),','))
+
+for a in range(0,4): #운용 수익률 채우기
+    hwp.PutFieldText(f'page18_{a+65}',"{:.2f}".format(sh101.range(f'CP{a+9}').value))
+
+hwp.PutFieldText('page18_37', hwp.GetFieldText('page18_51')) #해외위탁 결산수익률
+hwp.PutFieldText('page18_38', transHangeul(hwp.GetFieldText('page18_47'))) #결산손익
+hwp.PutFieldText('page18_39', hwp.GetFieldText('page18_68')) #운용수익률
+
+### page19 (누름틀 42개 / 누적 1793개)
+
+#운용현황
+for a in range(0,2): #작년말 채우기
+    hwp.PutFieldText(f'page19_{a+6}',format(round(sh101.range(f'CS{a+3}').value),','))
+
+for a in range(0,3): #page19의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page19_{a+8}",hwp.GetFieldText(f"page19_{a+11}"))
+
+hwp.PutFieldText('page19_11',n월말) #n월말
+
+for a in range(0,2): #n월말 채우기
+    hwp.PutFieldText(f'page19_{a+12}',format(round(sh101.range(f'CT{a+3}').value),','))
+
+for a in range(0,2): #전년말 
+    hwp.PutFieldText(f'page19_{a+14}',format(round(float(hwp.GetFieldText(f'page19_{a+12}').replace(",",""))-float(hwp.GetFieldText(f'page19_{a+6}').replace(",",""))),','))
+
+for a in range(0,2): #전월말
+    hwp.PutFieldText(f'page19_{a+16}',format(round(float(hwp.GetFieldText(f'page19_{a+12}').replace(",",""))-float(hwp.GetFieldText(f'page19_{a+9}').replace(",",""))),','))
+
+hwp.PutFieldText('page19_18',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page19_19',format(round(sh101.range('CU3').value),',')) #계획 채우기
+hwp.PutFieldText('page19_20',format(round(sh101.range('CU4').value),','))
+
+hwp.PutFieldText('page19_21',format(round(sh101.range('CV3').value),',')) #실적 채우기
+hwp.PutFieldText('page19_22',format(round(sh101.range('CV4').value),','))
+
+hwp.PutFieldText('page19_23',"{:.1f}".format(sh101.range('CW3').value)) #달성률 채우기
+hwp.PutFieldText('page19_24',"{:.1f}".format(sh101.range('CW4').value))
+
+hwp.PutFieldText('page19_1', transHangeul(hwp.GetFieldText('page19_13'))) #해외ETF 잔액
+hwp.PutFieldText('page19_2', transHangeulUpDown(hwp.GetFieldText('page19_15'))) #전년말 대비
+hwp.PutFieldText('page19_3', transHangeulUpDown(hwp.GetFieldText('page19_17'))) #전월말 대비
+hwp.PutFieldText('page19_4',n월말.replace("월말",""))
+hwp.PutFieldText('page19_5', transHangeul(hwp.GetFieldText('page19_22')))
+
+#손익현황
+for a in range(0,2): #평잔 채우기
+    hwp.PutFieldText(f'page19_{a+28}',format(round(sh101.range(f'CS{a+7}').value),','))
+
+for a in range(0,2): #손익 채우기
+    hwp.PutFieldText(f'page19_{a+30}',format(round(sh101.range(f'CT{a+7}').value),','))
+
+for a in range(0,2): #수익률 채우기
+    hwp.PutFieldText(f'page19_{a+32}',"{:.2f}".format(sh101.range(f'CU{a+7}').value))
+
+for a in range(0,2): #전년말 채우기
+    hwp.PutFieldText(f'page19_{a+34}',format(round(sh101.range(f'CV{a+7}').value),','))
+
+hwp.PutFieldText('page19_36',n월말) #n월말
+
+for a in range(0,2): #n월말 채우기
+    hwp.PutFieldText(f'page19_{a+37}',format(round(sh101.range(f'CW{a+7}').value),','))
+
+for a in range(0,2): #증감 채우기
+    hwp.PutFieldText(f'page19_{a+39}',format(round(sh101.range(f'CX{a+7}').value),','))
+
+for a in range(0,2): #운용 수익률 채우기
+    hwp.PutFieldText(f'page19_{a+41}',"{:.2f}".format(sh101.range(f'CY{a+7}').value))
+
+hwp.PutFieldText('page19_25', hwp.GetFieldText('page19_33')) #해외ETF 결산수익률
+hwp.PutFieldText('page19_26', transHangeul(hwp.GetFieldText('page19_31'))) #결산손익
+hwp.PutFieldText('page19_27', hwp.GetFieldText('page19_42')) #운용수익률
+
+### page20 (누름틀 57개 / 누적 1850개)
+
+#운용현황
+for a in range(0,3): #작년말 채우기
+    hwp.PutFieldText(f'page20_{a+8}',format(round(sh101.range(f'DB{a+3}').value),','))
+
+for a in range(0,4): #page20의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page20_{a+11}",hwp.GetFieldText(f"page20_{a+15}"))
+
+hwp.PutFieldText('page20_15',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page20_{a+16}',format(round(sh101.range(f'DC{a+3}').value),','))
+
+for a in range(0,3): #전년말 
+    hwp.PutFieldText(f'page20_{a+19}',format(round(float(hwp.GetFieldText(f'page20_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page20_{a+8}').replace(",",""))),','))
+
+for a in range(0,3): #전월말
+    hwp.PutFieldText(f'page20_{a+22}',format(round(float(hwp.GetFieldText(f'page20_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page20_{a+12}').replace(",",""))),','))
+
+hwp.PutFieldText('page20_25',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page20_26',format(round(sh101.range('DD3').value),',')) #계획 채우기
+hwp.PutFieldText('page20_27',format(round(sh101.range('DD5').value),','))
+
+hwp.PutFieldText('page20_28',format(round(sh101.range('DE3').value),',')) #실적 채우기
+hwp.PutFieldText('page20_29',format(round(sh101.range('DE4').value),','))
+hwp.PutFieldText('page20_30',format(round(sh101.range('DE5').value),','))
+
+hwp.PutFieldText('page20_31',"{:.1f}".format(sh101.range('DF3').value)) #달성률 채우기
+hwp.PutFieldText('page20_32',"{:.1f}".format(sh101.range('DF5').value))
+
+hwp.PutFieldText('page20_1', transHangeul(hwp.GetFieldText('page20_18'))) #부동산투자 잔액
+hwp.PutFieldText('page20_2', transHangeulUpDown(hwp.GetFieldText('page20_21'))) #전년말 대비
+hwp.PutFieldText('page20_3', transHangeulUpDown(hwp.GetFieldText('page20_24'))) #전월말 대비
+hwp.PutFieldText('page20_4',n월말.replace("월말",""))
+hwp.PutFieldText('page20_5', transHangeul(hwp.GetFieldText('page20_30')))
+
+hwp.PutFieldText('page20_6', transHangeul(hwp.GetFieldText('page20_28'))) #국내부동산 신규
+hwp.PutFieldText('page20_7', transHangeul(hwp.GetFieldText('page20_29'))) #해외부동산 신규
+
+#손익현황
+for a in range(0,3): #평잔 채우기
+    hwp.PutFieldText(f'page20_{a+36}',format(round(sh101.range(f'DB{a+8}').value),','))
+
+for a in range(0,3): #손익 채우기
+    hwp.PutFieldText(f'page20_{a+39}',format(round(sh101.range(f'DC{a+8}').value),','))
+
+for a in range(0,3): #수익률 채우기
+    hwp.PutFieldText(f'page20_{a+42}',"{:.2f}".format(sh101.range(f'DD{a+8}').value))
+
+for a in range(0,3): #전년말 채우기
+    hwp.PutFieldText(f'page20_{a+45}',format(round(sh101.range(f'DE{a+8}').value),','))
+
+hwp.PutFieldText('page20_48',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page20_{a+49}',format(round(sh101.range(f'DF{a+8}').value),','))
+
+for a in range(0,3): #증감 채우기
+    hwp.PutFieldText(f'page20_{a+52}',format(round(sh101.range(f'DG{a+8}').value),','))
+
+for a in range(0,3): #운용 수익률 채우기
+    hwp.PutFieldText(f'page20_{a+55}',"{:.2f}".format(sh101.range(f'DH{a+8}').value))
+
+hwp.PutFieldText('page20_33', hwp.GetFieldText('page20_44')) #부동산투자 결산수익률
+hwp.PutFieldText('page20_34', transHangeul(hwp.GetFieldText('page20_41'))) #결산손익
+hwp.PutFieldText('page20_35', hwp.GetFieldText('page20_57')) #운용수익률
+
+### page21 (누름틀 69개 / 누적 1919개)
+
+#운용현황
+for a in range(0,4): #작년말 채우기
+    hwp.PutFieldText(f'page21_{a+7}',format(round(sh101.range(f'DK{a+3}').value),','))
+
+for a in range(0,5): #page21의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page21_{a+11}",hwp.GetFieldText(f"page21_{a+16}"))
+
+hwp.PutFieldText('page21_16',n월말) #n월말
+
+for a in range(0,4): #n월말 채우기
+    hwp.PutFieldText(f'page21_{a+17}',format(round(sh101.range(f'DL{a+3}').value),','))
+
+for a in range(0,4): #전년말 
+    hwp.PutFieldText(f'page21_{a+21}',format(round(float(hwp.GetFieldText(f'page21_{a+17}').replace(",",""))-float(hwp.GetFieldText(f'page21_{a+7}').replace(",",""))),','))
+
+for a in range(0,4): #전월말
+    hwp.PutFieldText(f'page21_{a+25}',format(round(float(hwp.GetFieldText(f'page21_{a+17}').replace(",",""))-float(hwp.GetFieldText(f'page21_{a+12}').replace(",",""))),','))
+
+hwp.PutFieldText('page21_29',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page21_30',format(round(sh101.range('DM3').value),',')) #계획 채우기
+hwp.PutFieldText('page21_31',format(round(sh101.range('DM6').value),','))
+
+for a in range(0,4): #실적 채우기
+    hwp.PutFieldText(f'page21_{a+32}',format(round(sh101.range(f'DN{a+3}').value),','))
+
+hwp.PutFieldText('page21_36',"{:.1f}".format(sh101.range('DO3').value)) #달성률 채우기
+hwp.PutFieldText('page21_37',"{:.1f}".format(sh101.range('DO6').value))
+
+hwp.PutFieldText('page21_1', transHangeul(hwp.GetFieldText('page21_20'))) #인프라투자 잔액
+hwp.PutFieldText('page21_2', transHangeulUpDown(hwp.GetFieldText('page21_24'))) #전년말 대비
+hwp.PutFieldText('page21_3', transHangeulUpDown(hwp.GetFieldText('page21_28'))) #전월말 대비
+hwp.PutFieldText('page21_4',n월말.replace("월말",""))
+hwp.PutFieldText('page21_5', transHangeul(hwp.GetFieldText('page21_35')))
+
+hwp.PutFieldText('page21_6', transHangeul(hwp.GetFieldText('page21_34'))) #해외부동산 신규 ? 추후 수정
+
+#손익현황
+for a in range(0,4): #평잔 채우기
+    hwp.PutFieldText(f'page21_{a+41}',format(round(sh101.range(f'DK{a+9}').value),','))
+
+for a in range(0,4): #손익 채우기
+    hwp.PutFieldText(f'page21_{a+45}',format(round(sh101.range(f'DL{a+9}').value),','))
+
+for a in range(0,4): #수익률 채우기
+    hwp.PutFieldText(f'page21_{a+49}',"{:.2f}".format(sh101.range(f'DM{a+9}').value))
+
+for a in range(0,4): #전년말 채우기
+    hwp.PutFieldText(f'page21_{a+53}',format(round(sh101.range(f'DN{a+9}').value),','))
+
+hwp.PutFieldText('page21_57',n월말) #n월말
+
+for a in range(0,4): #n월말 채우기
+    hwp.PutFieldText(f'page21_{a+58}',format(round(sh101.range(f'DO{a+9}').value),','))
+
+for a in range(0,4): #증감 채우기
+    hwp.PutFieldText(f'page21_{a+62}',format(round(sh101.range(f'DP{a+9}').value),','))
+
+for a in range(0,4): #운용 수익률 채우기
+    hwp.PutFieldText(f'page21_{a+66}',"{:.2f}".format(sh101.range(f'DQ{a+9}').value))
+
+hwp.PutFieldText('page21_38', hwp.GetFieldText('page21_52')) #해외위탁 결산수익률
+hwp.PutFieldText('page21_39', transHangeul(hwp.GetFieldText('page21_48'))) #결산손익
+hwp.PutFieldText('page21_40', hwp.GetFieldText('page21_69')) #운용수익률
+
+### page22 (누름틀 43개 / 누적 1962개)¶
+
+#운용현황
+for a in range(0,2): #작년말 채우기
+    hwp.PutFieldText(f'page22_{a+7}',format(round(sh101.range(f'DT{a+3}').value),','))
+
+for a in range(0,3): #page22의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page22_{a+9}",hwp.GetFieldText(f"page22_{a+12}"))
+
+hwp.PutFieldText('page22_12',n월말) #n월말
+
+for a in range(0,2): #n월말 채우기
+    hwp.PutFieldText(f'page22_{a+13}',format(round(sh101.range(f'DU{a+3}').value),','))
+
+for a in range(0,2): #전년말 
+    hwp.PutFieldText(f'page22_{a+15}',format(round(float(hwp.GetFieldText(f'page22_{a+13}').replace(",",""))-float(hwp.GetFieldText(f'page22_{a+7}').replace(",",""))),','))
+
+for a in range(0,2): #전월말
+    hwp.PutFieldText(f'page22_{a+17}',format(round(float(hwp.GetFieldText(f'page22_{a+13}').replace(",",""))-float(hwp.GetFieldText(f'page22_{a+10}').replace(",",""))),','))
+
+hwp.PutFieldText('page22_19',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page22_20',format(round(sh101.range('DV3').value),',')) #계획 채우기
+hwp.PutFieldText('page22_21',format(round(sh101.range('DV4').value),','))
+
+hwp.PutFieldText('page22_22',format(round(sh101.range('DW3').value),',')) #실적 채우기
+hwp.PutFieldText('page22_23',format(round(sh101.range('DW4').value),','))
+
+hwp.PutFieldText('page22_24',"{:.1f}".format(sh101.range('DX3').value)) #달성률 채우기
+hwp.PutFieldText('page22_25',"{:.1f}".format(sh101.range('DX4').value))
+
+hwp.PutFieldText('page22_1', transHangeul(hwp.GetFieldText('page22_14'))) #사모투자 잔액
+hwp.PutFieldText('page22_2', transHangeulUpDown(hwp.GetFieldText('page22_16'))) #전년말 대비
+hwp.PutFieldText('page22_3', transHangeulUpDown(hwp.GetFieldText('page22_18'))) #전월말 대비
+hwp.PutFieldText('page22_4',n월말.replace("월말",""))
+hwp.PutFieldText('page22_5', transHangeul(hwp.GetFieldText('page22_23')))
+
+hwp.PutFieldText('page22_6', transHangeul(hwp.GetFieldText('page22_22'))) #사모투자 신규
+
+#손익현황
+for a in range(0,2): #평잔 채우기
+    hwp.PutFieldText(f'page22_{a+29}',format(round(sh101.range(f'DT{a+7}').value),','))
+
+for a in range(0,2): #손익 채우기
+    hwp.PutFieldText(f'page22_{a+31}',format(round(sh101.range(f'DU{a+7}').value),','))
+
+for a in range(0,2): #수익률 채우기
+    hwp.PutFieldText(f'page22_{a+33}',"{:.2f}".format(sh101.range(f'DV{a+7}').value))
+
+for a in range(0,2): #전년말 채우기
+    hwp.PutFieldText(f'page22_{a+35}',format(round(sh101.range(f'DW{a+7}').value),','))
+
+hwp.PutFieldText('page22_37',n월말) #n월말
+
+for a in range(0,2): #n월말 채우기
+    hwp.PutFieldText(f'page22_{a+38}',format(round(sh101.range(f'DX{a+7}').value),','))
+
+for a in range(0,2): #증감 채우기
+    hwp.PutFieldText(f'page22_{a+40}',format(round(sh101.range(f'DY{a+7}').value),','))
+
+for a in range(0,2): #운용 수익률 채우기
+    hwp.PutFieldText(f'page22_{a+42}',"{:.2f}".format(sh101.range(f'DZ{a+7}').value))
+
+hwp.PutFieldText('page22_26', hwp.GetFieldText('page22_34')) #사모투자 결산수익률
+hwp.PutFieldText('page22_27', transHangeul(hwp.GetFieldText('page22_32'))) #결산손익
+hwp.PutFieldText('page22_28', hwp.GetFieldText('page22_43')) #운용수익률
+
+### page23 (누름틀 84개 / 누적 2046개)
+
+#운용현황
+for a in range(0,5): #작년말 채우기
+    hwp.PutFieldText(f'page23_{a+9}',format(round(sh101.range(f'EC{a+3}').value),','))
+
+for a in range(0,6): #page23의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page23_{a+14}",hwp.GetFieldText(f"page23_{a+20}"))
+
+hwp.PutFieldText('page23_20',n월말) #n월말
+
+for a in range(0,5): #n월말 채우기
+    hwp.PutFieldText(f'page23_{a+21}',format(round(sh101.range(f'ED{a+3}').value),','))
+
+for a in range(0,5): #전년말 
+    hwp.PutFieldText(f'page23_{a+26}',format(round(float(hwp.GetFieldText(f'page23_{a+21}').replace(",",""))-float(hwp.GetFieldText(f'page23_{a+9}').replace(",",""))),','))
+
+for a in range(0,5): #전월말
+    hwp.PutFieldText(f'page23_{a+31}',format(round(float(hwp.GetFieldText(f'page23_{a+21}').replace(",",""))-float(hwp.GetFieldText(f'page23_{a+15}').replace(",",""))),','))
+
+hwp.PutFieldText('page23_36',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page23_37',format(round(sh101.range('EE3').value),',')) #계획 채우기
+hwp.PutFieldText('page23_38',format(round(sh101.range('EE7').value),','))
+
+for a in range(0,5): #실적 채우기
+    hwp.PutFieldText(f'page23_{a+39}',format(round(sh101.range(f'EF{a+3}').value),','))
+
+hwp.PutFieldText('page23_44',"{:.1f}".format(sh101.range('EG3').value)) #달성률 채우기
+hwp.PutFieldText('page23_45',"{:.1f}".format(sh101.range('EG7').value))
+
+hwp.PutFieldText('page23_1', transHangeul(hwp.GetFieldText('page23_25'))) #인수금융 잔액
+hwp.PutFieldText('page23_2', transHangeulUpDown(hwp.GetFieldText('page23_30'))) #전년말 대비
+hwp.PutFieldText('page23_3', transHangeulUpDown(hwp.GetFieldText('page23_35'))) #전월말 대비
+hwp.PutFieldText('page23_4',n월말.replace("월말",""))
+hwp.PutFieldText('page23_5', transHangeul(hwp.GetFieldText('page23_43')))
+
+hwp.PutFieldText('page23_6', transHangeul(hwp.GetFieldText('page23_39'))) #기업금융 신규
+hwp.PutFieldText('page23_7', transHangeul(hwp.GetFieldText('page23_40'))) #인수금융 신규
+hwp.PutFieldText('page23_8', transHangeul(hwp.GetFieldText('page23_41'))) #수익증권 신규
+
+#손익현황
+for a in range(0,5): #평잔 채우기
+    hwp.PutFieldText(f'page23_{a+49}',format(round(sh101.range(f'EC{a+10}').value),','))
+
+for a in range(0,5): #손익 채우기
+    hwp.PutFieldText(f'page23_{a+54}',format(round(sh101.range(f'ED{a+10}').value),','))
+
+for a in range(0,5): #수익률 채우기
+    hwp.PutFieldText(f'page23_{a+59}',"{:.2f}".format(sh101.range(f'EE{a+10}').value))
+
+for a in range(0,5): #전년말 채우기
+    hwp.PutFieldText(f'page23_{a+64}',format(round(sh101.range(f'EF{a+10}').value),','))
+
+hwp.PutFieldText('page23_69',n월말) #n월말
+
+for a in range(0,5): #n월말 채우기
+    hwp.PutFieldText(f'page23_{a+70}',format(round(sh101.range(f'EG{a+10}').value),','))
+
+for a in range(0,5): #증감 채우기
+    hwp.PutFieldText(f'page23_{a+75}',format(round(sh101.range(f'EH{a+10}').value),','))
+
+for a in range(0,5): #운용 수익률 채우기
+    hwp.PutFieldText(f'page23_{a+80}',"{:.2f}".format(sh101.range(f'EI{a+10}').value))
+
+hwp.PutFieldText('page23_46', hwp.GetFieldText('page23_63')) #인수금융 결산수익률
+hwp.PutFieldText('page23_47', transHangeul(hwp.GetFieldText('page23_58'))) #결산손익
+hwp.PutFieldText('page23_48', hwp.GetFieldText('page23_84')) #운용수익률
+
+### page24 (누름틀 57개 / 누적 2103개)
+
+#운용현황
+for a in range(0,3): #작년말 채우기
+    hwp.PutFieldText(f'page24_{a+8}',format(round(sh101.range(f'EL{a+3}').value),','))
+
+for a in range(0,4): #page24의 n-1월말 왼쪽으로 당겨옴
+    hwp.PutFieldText(f"page24_{a+11}",hwp.GetFieldText(f"page24_{a+15}"))
+
+hwp.PutFieldText('page24_15',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page24_{a+16}',format(round(sh101.range(f'EM{a+3}').value),','))
+
+for a in range(0,3): #전년말 
+    hwp.PutFieldText(f'page24_{a+19}',format(round(float(hwp.GetFieldText(f'page24_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page24_{a+8}').replace(",",""))),','))
+
+for a in range(0,3): #전월말
+    hwp.PutFieldText(f'page24_{a+22}',format(round(float(hwp.GetFieldText(f'page24_{a+16}').replace(",",""))-float(hwp.GetFieldText(f'page24_{a+12}').replace(",",""))),','))
+
+hwp.PutFieldText('page24_25',n월말.replace("월말","")) #n월 신규운용 계획 대비 실적
+hwp.PutFieldText('page24_26',format(round(sh101.range('EN3').value),',')) #계획 채우기
+hwp.PutFieldText('page24_27',format(round(sh101.range('EN5').value),','))
+
+hwp.PutFieldText('page24_28',format(round(sh101.range('EO3').value),',')) #실적 채우기
+hwp.PutFieldText('page24_29',format(round(sh101.range('EO4').value),','))
+hwp.PutFieldText('page24_30',format(round(sh101.range('EO5').value),','))
+
+hwp.PutFieldText('page24_31',"{:.1f}".format(sh101.range('EP3').value)) #달성률 채우기
+hwp.PutFieldText('page24_32',"{:.1f}".format(sh101.range('EP5').value))
+
+hwp.PutFieldText('page24_1', transHangeul(hwp.GetFieldText('page24_18'))) #부동산투자 잔액
+hwp.PutFieldText('page24_2', transHangeulUpDown(hwp.GetFieldText('page24_21'))) #전년말 대비
+hwp.PutFieldText('page24_3', transHangeulUpDown(hwp.GetFieldText('page24_24'))) #전월말 대비
+hwp.PutFieldText('page24_4',n월말.replace("월말",""))
+hwp.PutFieldText('page24_5', transHangeul(hwp.GetFieldText('page24_30')))
+
+hwp.PutFieldText('page24_6', transHangeul(hwp.GetFieldText('page24_28'))) #해외사모 신규
+hwp.PutFieldText('page24_7', transHangeul(hwp.GetFieldText('page24_29'))) #수익증권 신규
+
+#손익현황
+for a in range(0,3): #평잔 채우기
+    hwp.PutFieldText(f'page24_{a+36}',format(round(sh101.range(f'EL{a+8}').value),','))
+
+for a in range(0,3): #손익 채우기
+    hwp.PutFieldText(f'page24_{a+39}',format(round(sh101.range(f'EM{a+8}').value),','))
+
+for a in range(0,3): #수익률 채우기
+    hwp.PutFieldText(f'page24_{a+42}',"{:.2f}".format(sh101.range(f'EN{a+8}').value))
+
+for a in range(0,3): #전년말 채우기
+    hwp.PutFieldText(f'page24_{a+45}',format(round(sh101.range(f'EO{a+8}').value),','))
+
+hwp.PutFieldText('page24_48',n월말) #n월말
+
+for a in range(0,3): #n월말 채우기
+    hwp.PutFieldText(f'page24_{a+49}',format(round(sh101.range(f'EP{a+8}').value),','))
+
+for a in range(0,3): #증감 채우기
+    hwp.PutFieldText(f'page24_{a+52}',format(round(sh101.range(f'EQ{a+8}').value),','))
+
+for a in range(0,3): #운용 수익률 채우기
+    hwp.PutFieldText(f'page24_{a+55}',"{:.2f}".format(sh101.range(f'ER{a+8}').value))
+
+hwp.PutFieldText('page24_33', hwp.GetFieldText('page24_44')) #해외투자 결산수익률
+hwp.PutFieldText('page24_34', transHangeul(hwp.GetFieldText('page24_41'))) #결산손익
+hwp.PutFieldText('page24_35', hwp.GetFieldText('page24_57')) #운용수익률
+
+
+
