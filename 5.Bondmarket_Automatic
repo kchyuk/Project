@@ -1,0 +1,404 @@
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.utils.cell import coordinate_from_string
+
+from openpyxl.chart import (LineChart, BarChart, ScatterChart, Reference, Series,)
+from openpyxl.chart.label import DataLabelList
+from openpyxl.chart import legend
+from openpyxl.chart.layout import Layout, ManualLayout
+from openpyxl.chart.marker import DataPoint
+from openpyxl.chart.shapes import GraphicalProperties
+
+from openpyxl.drawing.fill import PatternFillProperties, ColorChoice
+from openpyxl.drawing.image import Image
+
+from openpyxl.styles.borders import Border, Side
+from openpyxl.styles import Border
+from openpyxl.styles import Font, NamedStyle 
+
+import warnings
+warnings.filterwarnings('ignore')
+
+from matplotlib import font_manager, rc
+import matplotlib
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
+rc('font', family=font_name)
+
+### 시트 할당
+
+wb = load_workbook("20220111_금리.xlsx", data_only=True)
+wb.create_sheet(title='월별스프레드')
+ws1 = wb['11월말']
+ws2 = wb['12월말']
+ws3 = wb['주요채권']
+ws4 = wb['발행통계']
+ws5 = wb['월별스프레드']
+wb.create_sheet('국고채금리동향',4)
+ws6 = wb['국고채금리동향']
+
+### 월별 스프레드
+
+채권리스트 = ['국고채', '특수채 AAA','은행채 AAA','여전채 AA+',
+         '여전채 A+','회사채 AAA','회사채 AA-','회사채 A+']
+연도리스트 = ['1Y','3Y','5Y','10Y']
+ws5['B1'] ='1Y'
+ws5['C1'] ='3Y'
+ws5['D1'] ='5Y'
+ws5['E1'] ='10Y'
+
+ws5['B10'] ='1Y'
+ws5['C10'] ='3Y'
+ws5['D10'] ='5Y'
+ws5['E10'] ='10Y'
+for i,x in enumerate(채권리스트):
+    ws5[f"A{i+2}"] = x
+    ws5[f"A{i+11}"] = x
+
+#### 12월 말 금리 가져오기
+
+for b,e in enumerate(['E'+str(x) for x in range(4,36,4)]):
+    ws5[f'B{b+11}'] = ws2[e].value 
+        
+for b,e in enumerate(['I'+str(x) for x in range(4,36,4)]):
+    ws5[f'C{b+11}'] = ws2[e].value       
+    
+for b,e in enumerate(['K'+str(x) for x in range(4,36,4)]):
+    ws5[f'D{b+11}'] = ws2[e].value     
+    
+for b,e in enumerate(['M'+str(x) for x in range(4,36,4)]):
+    ws5[f'E{b+11}'] = ws2[e].value         
+
+#### 11월 말 금리 가져오기
+
+for b,e in enumerate(['E'+str(x) for x in range(4,36,4)]):
+    ws5[f'B{b+2}'] = ws1[e].value 
+
+for b,e in enumerate(['I'+str(x) for x in range(4,36,4)]):
+    ws5[f'C{b+2}'] = ws1[e].value     
+    
+for b,e in enumerate(['K'+str(x) for x in range(4,36,4)]):
+    ws5[f'D{b+2}'] = ws1[e].value 
+
+for b,e in enumerate(['M'+str(x) for x in range(4,36,4)]):
+    ws5[f'E{b+2}'] = ws1[e].value 
+
+for x in range(12,19):
+    ws5[f'F{x}'] = (ws5[f'B{x}'].value - ws5['B11'].value)*100
+    ws5[f'G{x}'] = (ws5[f'C{x}'].value - ws5['C11'].value)*100
+    ws5[f'H{x}'] = (ws5[f'D{x}'].value - ws5['D11'].value)*100
+    ws5[f'I{x}'] = (ws5[f'E{x}'].value - ws5['E11'].value)*100
+
+for x in range(3,10):
+    ws5[f'F{x}'] = (ws5[f'B{x}'].value - ws5['B2'].value)*100
+    ws5[f'G{x}'] = (ws5[f'C{x}'].value - ws5['C2'].value)*100
+    ws5[f'H{x}'] = (ws5[f'D{x}'].value - ws5['D2'].value)*100
+    ws5[f'I{x}'] = (ws5[f'E{x}'].value - ws5['E2'].value)*100
+
+for x in range(3,10):
+    ws5[f'J{x+9}'] = ws5[f'F{x+9}'].value - ws5[f'F{x}'].value
+    ws5[f'K{x+9}'] = ws5[f'G{x+9}'].value - ws5[f'G{x}'].value
+    ws5[f'L{x+9}'] = ws5[f'H{x+9}'].value - ws5[f'H{x}'].value   
+    ws5[f'M{x+9}'] = ws5[f'I{x+9}'].value - ws5[f'I{x}'].value   
+
+#### 테두리 그리기
+
+thin_border = Border(left=Side(style='thin'), 
+                     right=Side(style='thin'), 
+                     top=Side(style='thin'), 
+                     bottom=Side(style='thin')) 
+my_style = NamedStyle(border=thin_border) 
+
+for rng in ws5['K12:K18']:
+    for cell in rng:
+        cell.border = thin_border # [K12:K18] 모든테두리 설정
+
+#### 월별 스프레드 차트 그리기
+
+values = Reference(ws5, min_col=11,min_row=12, max_col=11,max_row=18)
+cats = Reference(ws5, min_col=1,min_row=12, max_col=1,max_row=18)
+chart = BarChart()
+
+chart.add_data(values)
+chart.set_categories(cats)
+
+chart.height = 9.25
+chart.width = 10.07
+
+chart.dataLabels = DataLabelList()
+chart.dataLabels.showVal = True
+
+chart.legend = None
+ws5.add_chart(chart, 'N20')
+
+### 국고채 금리동향
+
+ws6['A1'] = '국고채'
+ws6['A2'] = '`21.11월말(좌)'
+ws6['A3'] = '`21.12월말(좌)'
+ws6['A4'] = '전월대비(우)'
+
+ws6['B1'] = '1년'
+ws6['B2'] = ws1['E4'].value
+ws6['B3'] = ws2['E4'].value
+ws6['B4'] = (ws6['B3'].value - ws6['B2'].value)*100
+
+ws6['C1'] = '3년'
+ws6['C2'] = ws1['I4'].value
+ws6['C3'] = ws2['I4'].value
+ws6['C4'] = (ws6['C3'].value - ws6['C2'].value)*100
+
+ws6['D1'] = '5년'
+ws6['D2'] = ws1['K4'].value
+ws6['D3'] = ws2['K4'].value
+ws6['D4'] = (ws6['D3'].value - ws6['D2'].value)*100
+
+ws6['E1'] = '10년'
+ws6['E2'] = ws1['M4'].value
+ws6['E3'] = ws2['M4'].value
+ws6['E4'] = (ws6['E3'].value - ws6['E2'].value)*100
+
+ws6['F1'] = '20년'
+ws6['F2'] = ws1['O4'].value
+ws6['F3'] = ws2['O4'].value
+ws6['F4'] = (ws6['F3'].value - ws6['F2'].value)*100
+
+ws6['G1'] = '30년'
+ws6['G2'] = ws1['P4'].value
+ws6['G3'] = ws2['P4'].value
+ws6['G4'] = (ws6['G3'].value - ws6['G2'].value)*100
+
+
+#### BarChart
+chart1 = BarChart()
+category1 = Reference(ws6, min_col=1, max_col=7, min_row=4)
+category_bumju = Reference(ws6, min_col=2, max_col=7, min_row=1)
+chart1.add_data(category1, titles_from_data=True, from_rows=True)
+chart1.w = 7
+chart1.d = 60
+chart1.y_axis.scaling.min = -10
+chart1.y_axis.scaling.max = 10
+chart1.x_axis.tickLblPos = "low"
+
+chart1.set_categories(category_bumju)
+chart1.dataLabels = DataLabelList() 
+chart1.dataLabels.showVal = True
+chart1.legend.position = 'b'
+
+from openpyxl.chart.shapes import GraphicalProperties
+sgp = GraphicalProperties(solidFill='FFFFFF')  # White
+chart1.y_axis.majorGridlines.spPr = sgp
+chart1.y_axis.majorGridlines.spPr.ln.noFill = True
+
+#### LineChart
+chart2 = LineChart()
+category2 = Reference(ws6, min_col=1, max_col=7, min_row=2, max_row=3)
+category_bumju_2 = Reference(ws6, min_col=1, max_col=7, min_row=1, max_row=1)
+chart2.add_data(category2, titles_from_data=True, from_rows=True)
+
+chart2.series[0].marker.symbol = 'triangle'
+chart2.series[0].marker.graphicalProperties.solidFill = "FF0000" # Marker filling
+chart2.series[0].marker.graphicalProperties.line.solidFill = "FF0000" # Marker outline
+chart2.series[0].graphicalProperties.line.noFill = False  # hide lines
+
+chart2.series[1].marker.symbol = 'circle'
+chart2.y_axis.axId = 200
+chart2.y_axis.scaling.min = 1.2
+chart2.y_axis.scaling.max = 2.5
+
+from openpyxl.chart.axis import DateAxis, ChartLines
+from openpyxl.chart.updown_bars import UpDownBars
+
+sgp = GraphicalProperties(solidFill='FFFFFF')  # White
+chart2.y_axis.majorGridlines.spPr = sgp
+chart2.y_axis.majorGridlines.spPr.ln.noFill = False
+
+chart1.y_axis.crosses = 'max'
+chart1 += chart2
+
+ws6.add_chart(chart1, 'A10')
+
+### 발행통계
+
+ws4.delete_cols(2,10)
+ws4.delete_cols(4)
+발행통계 = pd.DataFrame(ws4.values)
+발행통계2 = 발행통계.rename(columns=발행통계.iloc[0])
+발행통계3 = 발행통계2.drop(발행통계2.index[0]).sort_values(by=['2021-12'], ascending=False)
+
+wb.create_sheet('발행통계_2',4)
+ws4_1 = wb['발행통계_2']
+
+for r in dataframe_to_rows(발행통계3, index=True, header=True):
+    if len(r)>1:
+        ws4_1.append(r)
+
+del wb['발행통계']
+
+### 주요채권
+
+주요채권 = pd.DataFrame(ws3.values)
+주요채권2 = 주요채권.rename(columns=주요채권.iloc[0])
+주요채권3 = 주요채권2.drop(주요채권2.index[0]).sort_values(by=['발행금액'], ascending=False)
+index_ = 주요채권3[주요채권3['신용등급'] == '없음'].index
+주요채권4 = 주요채권3.drop(index_)
+
+wb.create_sheet('주요채권_2',4)
+ws5_1 = wb['주요채권_2']
+
+for r in dataframe_to_rows(주요채권4, index=True, header=True):
+    if len(r)>1:
+        ws5_1.append(r)
+        
+ws5_1.delete_cols(1)
+del wb['주요채권']
+
+ws5_1.delete_cols(2,4)
+ws5_1.delete_cols(5,2)
+ws5_1.delete_cols(6,2)
+ws5_1.delete_cols(7)
+ws5_1.delete_cols(8,3)
+
+date_style = NamedStyle(name='datetime', number_format='YYYY/MM/DD')
+
+for x in range(2,8):
+    ws5_1[f'C{x}'].style = date_style
+    ws5_1[f'D{x}'].style = date_style
+
+### 국내금리
+
+
+ws7 = wb['국내금리']
+국내금리 = pd.DataFrame(ws7.values)
+국내금리2 = 국내금리.rename(columns=국내금리.iloc[0])
+국내금리3 = 국내금리2.drop(국내금리2.index[0]).sort_values(by=['일자'])
+국내금리3['일자'] = pd.to_datetime(국내금리3['일자'], errors='coerce',format = '%Y-%m-%d').dt.strftime("`%y-%m")
+
+wb.create_sheet('국내금리_2',4)
+ws8 = wb['국내금리_2']
+
+for r in dataframe_to_rows(국내금리3, index=False, header=True):
+     if len(r)>1:
+        ws8.append(r)
+
+################## 차트 그리기 #######################        
+chart = LineChart()
+category = Reference(ws8, min_col=2, max_col=5, min_row=1, max_row=ws8.max_row)
+category_ilja = Reference(ws8, min_col=1, max_col=1, min_row=2, max_row=ws8.max_row)
+chart.add_data(category, titles_from_data=True)
+chart.set_categories(category_ilja)
+
+from openpyxl.chart.text import RichText
+from openpyxl.drawing.text import  RichTextProperties,Paragraph,ParagraphProperties, CharacterProperties
+chart.x_axis.txPr = RichText(bodyPr=RichTextProperties(anchor="ctr",anchorCtr="1",rot="-2700000",
+           spcFirstLastPara="1",vertOverflow="ellipsis",wrap="square"),
+        p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties()), endParaRPr=CharacterProperties())])
+
+chart.legend.position = 'b'
+ws8.add_chart(chart, "G3")
+
+del wb['국내금리']
+
+### 해외금리
+
+ws9 = wb['해외금리']
+from openpyxl.utils import range_boundaries
+wb.create_sheet('해외금리_2')
+ws10 = wb['해외금리_2']
+  
+a = [cell.value for cell in ws9['A']]
+for i,value in enumerate(a):
+    ws10.append([a[i]]) 
+    
+for r in range(1,ws10.max_row):
+    ws10[f'B{r}'] = f'=VLOOKUP(A{r},해외금리!A:H,2,0)'
+    
+for i, r in enumerate(list(range(1,ws10.max_row))):
+    ws10[f'C{r}'] = f'=VLOOKUP(A{i+1},해외금리!D:E,2,0)'    
+    
+for i, r in enumerate(list(range(1,ws10.max_row))):
+    ws10[f'D{r}'] = f'=VLOOKUP(A{i+1},해외금리!G:H,2,0)'    
+
+##################### 수식을 값으로 저장 ################
+
+wb.save("20220111_금리_.xlsx")
+
+import  win32com.client
+excel = win32com.client.Dispatch("Excel.Application")
+temp_wb = excel.Workbooks.Open("20220111_금리_.xlsx")
+temp_wb.Save()
+excel.quit()
+
+wb = load_workbook("20220111_금리_.xlsx", data_only=True)
+
+##########################################################
+
+ws1 = wb['11월말']  #시트 활성화
+ws2 = wb['12월말'] # 시트 활성화
+ws9 = wb['해외금리'] # 시트 활성화
+ws8 = wb['국내금리_2']
+ws5_1 = wb['주요채권_2']
+ws4_1 = wb['발행통계_2']
+ws6 = wb['국고채금리동향']
+ws5 = wb['월별스프레드']
+ws10 = wb['해외금리_2']
+
+해외금리 = pd.DataFrame(ws10.values)
+해외금리2 = 해외금리.rename(columns=해외금리.iloc[0])
+해외금리3 = 해외금리2.drop(해외금리2.index[0]).sort_values(by=['일자'])
+해외금리3['일자'] = pd.to_datetime(해외금리3['일자'], errors='coerce', format='%Y-%m-%d').dt.strftime("`%y-%m")
+
+wb.create_sheet('해외금리_3')
+ws11 = wb['해외금리_3']
+
+for r in dataframe_to_rows(해외금리3, index=False, header=True):
+     if len(r)>1:
+        ws11.append(r)
+
+해외금리4 = pd.DataFrame(ws11.values)
+
+index_0 = 해외금리4[해외금리4[0]=='#N/A'].index
+index_1 = 해외금리4[해외금리4[1]=='#N/A'].index
+해외금리4 = 해외금리4.drop(index_1)
+index_2 = 해외금리4[해외금리4[2]=='#N/A'].index
+해외금리4 = 해외금리4.drop(index_2)
+index_3 = 해외금리4[해외금리4[3]=='#N/A'].index
+해외금리4 = 해외금리4.drop(index_3)
+
+해외금리5 = 해외금리4.rename(columns=해외금리4.iloc[0])
+해외금리6 = 해외금리5.drop(해외금리5.index[0])
+
+wb.create_sheet('해외금리_4')
+ws12 = wb['해외금리_4']
+
+for r in dataframe_to_rows(해외금리6, index=False, header=True):
+     if len(r)>1:
+        ws12.append(r)
+
+chart = LineChart()
+category = Reference(ws12, min_col=2, max_col=4, min_row=1, max_row=ws8.max_row)
+category_ilja = Reference(ws8, min_col=1, max_col=1, min_row=2, max_row=ws8.max_row)
+chart.add_data(category, titles_from_data=True)
+chart.set_categories(category_ilja)
+
+chart.x_axis.txPr = RichText(bodyPr=RichTextProperties(anchor="ctr",anchorCtr="1",rot="-2700000",
+            spcFirstLastPara="1",vertOverflow="ellipsis",wrap="square"),
+         p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties()), endParaRPr=CharacterProperties())])
+
+chart.x_axis.tickLblPos = "low"
+chart.legend.position = 'b'
+
+ws12.add_chart(chart, "G3")
+
+########## 불필요한 시트 숨기기
+ws1.sheet_state = 'hidden'
+ws2.sheet_state = 'hidden'
+ws9.sheet_state = 'hidden'
+ws11.sheet_state = 'hidden'
+
+wb.save("20220111_금리_.xlsx")
