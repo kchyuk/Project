@@ -1,0 +1,132 @@
+# 숫자를 입력하면 억원 단위로 출력하는 함수
+def transHangeulUpDown(sample):
+    
+    if "-" in sample:
+        if len(sample[1:]) <= 5 :
+            return sample[1:] + "억원↓"
+
+        elif 6 <= len(sample[1:]) <= 7:
+            x = sample[1:][:-5] + "조 " + sample[1:][-5:] + "억원↓"
+            if x[-8:].startswith('0,000'):
+                return x[:-9]
+            elif x[-8:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-8:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-8:].startswith('0,'):
+                return x.replace("0,","")
+            else : 
+                return x
+
+        elif 8 <= len(sample[1:]) <= 10 :
+            x =  sample[1:][:-5].replace(",","") + "조 " + sample[1:][-5:] + "억원↓"
+            if x[-8:].startswith('0,000'):
+                return x[:-9]
+            elif x[-8:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-8:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-8:].startswith('0,'):
+                return x.replace("0,","")
+            else :
+                return x
+            
+    else :
+        if len(sample) <= 5 :
+            return sample + "억원↑"
+
+        elif 6 <= len(sample) <= 7:
+            x = sample[:-5] + "조 " + sample[-5:] + "억원↑"
+            if x[-8:].startswith('0,000'):
+                return x[:-9]
+            elif x[-8:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-8:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-8:].startswith('0,'):
+                return x.replace("0,","")
+            else :
+                return x
+            
+        elif 8 <= len(sample) <= 10 :
+            x = sample[:-5].replace(",","") + "조 " + sample[-5:] + "억원↑"
+            if x[-8:].startswith('0,000'):
+                return x[:-9]
+            elif x[-8:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-8:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-8:].startswith('0,'):
+                return x.replace("0,","")
+            else :
+                return x
+            
+def transHangeul(sample):
+    
+    if "-" in sample:
+        if len(sample[1:]) <= 5 :
+            return sample[1:] + "억원"
+
+        elif 6 <= len(sample[1:]) <= 7:
+            x = sample[1:][:-5] + "조 " + sample[1:][-5:] + "억원"
+            if x[-7:].startswith('0,000'):
+                return x[:-8]
+            elif x[-7:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-7:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-7:].startswith('0,'):
+                return x.replace("0,","")
+            else:
+                return x
+
+        elif 8 <= len(sample[1:]) <= 10 :
+            x =  sample[1:][:-5].replace(",","") + "조 " + sample[1:][-5:] + "억원"
+            if x[-7:].startswith('0,000'):
+                return x[:-8]
+            elif x[-7:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-7:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-7:].startswith('0,'):
+                return x.replace("0,","")
+            else:
+                return x
+            
+    else :
+        if len(sample) <= 5 :
+            return sample + "억원"
+
+        elif 6 <= len(sample) <= 7:
+            x = sample[:-5] + "조 " + sample[-5:] + "억원"
+            if x[-7:].startswith('0,000'):
+                return x[:-8]
+            elif x[-7:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-7:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-7:].startswith('0,'):
+                return x.replace("0,","")
+            else:
+                return x
+            
+        elif 8 <= len(sample) <= 10 :
+            x = sample[:-5].replace(",","") + "조 " + sample[-5:] + "억원"
+            if x[-7:].startswith('0,000'):
+                return x[:-8]
+            elif x[-7:].startswith('0,00'):
+                return x.replace("0,00","")
+            elif x[-7:].startswith('0,0'):
+                return x.replace("0,0","")
+            elif x[-7:].startswith('0,'):
+                return x.replace("0,","")
+            else:
+                return x
+            
+def upanddown(sample):
+    
+    if "-" in sample:
+        return sample.replace('-',"") + '%p↓'
+    
+    else:
+        return sample + '%p↑'
