@@ -33,9 +33,9 @@ time.sleep(2)
 # call = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketHome__1VTP1 > table > tbody > tr > td')][1][:6]),2)
 회사채 = round(float([td.text for td in wd.find_elements_by_css_selector('#content > div.TableComm_tableArea__3SfdJ.TableComm_marketHome__1VTP1 > table > tbody > tr > td')][7][:6]),2)
 
-wd.get("https://seibro.or.kr/websquare/control.jsp?w2xPath=/IPORTAL/user/repo/BIP_CNTS09001V.xml")
+wd.get("http://www.kmbco.com/kor/rate/repo_rate.do")
 time.sleep(4)
-repo = round(float([nobr.text for nobr in wd.find_elements_by_css_selector('#gridIRate_cell_0_1 > nobr')][0]),2)
+repo = [td.text for td in wd.find_elements_by_css_selector('#article1 > div > table > tbody > tr > td')][3][:4]
 
 wd.get("https://m.stock.naver.com/marketindex/bond/nation/KOR")
 time.sleep(2)
