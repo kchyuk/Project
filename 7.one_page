@@ -1,0 +1,15 @@
+#노을 과장님의 기존 won_2 함수의 논리 구조를 최대한 살리면서, 코드는 간략하게 구성해보았습니다.
+
+def won_2(a):
+    
+    amount=abs(int(a.replace(',','')));big,small=divmod(amount,10000)
+    
+    if a.replace(',','')[0] == '-':
+        if small == 0: return f'-{big}조원'
+        if big == 0: return f'-{small:,}억원'
+        return f'-{big}조 {small:,}억원'
+    
+    else:
+        if small == 0:return f'{big}조원'
+        if big == 0:return f'{small:,}억원'
+        return f'{big}조 {small:,}억원
