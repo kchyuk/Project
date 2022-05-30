@@ -84,9 +84,10 @@ for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a')
 
 word_list = sum([okt.nouns(a)for a in news_list],[]) 
 
-remove_list = ['발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률',
-               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','특징','한국','젤','롱','세','사','보','반','이후','']
-
+remove_list = ['지난해','대통령','단독','발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률','은',
+               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','경제',
+               '포토','부문','특징','한국','젤','롱','세','사','보','반','이후','첫','액','위','번',
+               '더','표','개','칠','질','익','절','현황','최대','안','준','때','비','새','제','초','전','']
                
 for a in remove_list:
     while a in word_list:
@@ -160,8 +161,10 @@ for a in wd.find_elements_by_css_selector('#recentList > li > div.txt > h2 > a')
 
 word_list_broad = sum([okt.nouns(a)for a in news_list_broad],[]) 
 
-remove_list_broad  = ['발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률',
-               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','특징','한국','젤','롱','세','사','보','반','이후','']
+remove_list_broad  = ['지난해','대통령','단독','발표','기업','속보','홍','증가','폭','곳','달','명','것','로','률','은',
+               '등','개월','역대','최고','세계','올해','작년','치','주','종합','마감','경제',
+               '포토','부문','특징','한국','젤','롱','세','사','보','반','이후','첫','액','위','번',
+               '더','표','개','칠','질','익','절','현황','최대','안','준','때','비','새','제','초','전','']
 
 for a in remove_list_broad:
     while a in word_list_broad:
@@ -268,8 +271,10 @@ for word in NN_words:
 final_NN_words = lemmatized_words
 
 customized_stopwords = stopwords.words('english') #불용어 사전
-customized_stopwords += ['be', 'today', 'yesterday','year', "it’s", "don’t",'hour' ,'business' ,
-                         'cnbc','news','day','time','rate']  # 직접 설정한 불용어 사전
+customized_stopwords += ['be', 'today', 'yesterday','year', 'week','minute',"it’s", "don’t",'hour' ,'business','cnn',
+                         'cnbc','news','day','time','rate','finance','company','economy','union','ceo','report','record',
+                         'york','fox','market','money','percent']  # 직접 설정한 불용어 사전
+                         
 unique_NN_words1 = set(final_NN_words)
 for word in unique_NN_words1:
     if word in customized_stopwords:
